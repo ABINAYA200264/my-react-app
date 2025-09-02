@@ -1,0 +1,48 @@
+
+# --- Web Framework ---
+fastapi
+uvicorn
+
+# --- Core ML / DS Stack ---
+tensorflow
+keras
+torch
+torchvision
+onnxruntime
+ultralytics
+
+numpy
+pandas
+scikit-learn
+scipy
+seaborn
+matplotlib
+
+# --- Utilities ---
+pydantic
+pydantic-extra-types
+pydantic-settings
+python-dotenv
+python-multipart
+requests
+email_validator
+orjson
+ujson
+PyYAML
+
+# --- Logging & CLI ---
+click
+typer
+coloredlogs
+humanfriendly
+rich
+sentry-sdk
+
+# --- Visualization ---
+opencv-python
+Pillow
+
+# --- Misc ---
+protobuf
+setuptools
+wheel

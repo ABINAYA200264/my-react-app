@@ -1,0 +1,3541 @@
+main.py
+
+
+# # from fastapi import FastAPI, HTTPException
+# # from pydantic import BaseModel
+# # from fastapi.middleware.cors import CORSMiddleware
+# # import torch
+# # import requests
+# # import cv2
+# # import os
+# # from torchvision import transforms
+# # from PIL import Image
+
+# # app = FastAPI()
+
+# # # Enable CORS for React frontend on http://localhost:3000
+# # app.add_middleware(
+# #     CORSMiddleware,
+# #     allow_origins=[
+# #         "http://localhost:3000",
+# #         "http://localhost:3001"  # Add this line for your React dev server
+# #     ],
+# #     allow_methods=["*"],
+# #     allow_headers=["*"],
+# # )
+
+
+
+
+# # # with safe_globals([DetectionModel]):
+# # #     model = torch.load("best_demo_allbox.pt")
+# # # model.eval()
+
+
+# # #with safe_globals([DetectionModel]):
+# # model = torch.load("D:\Vchanel\Box_detection_web\best_demo_allbox.pt", weights_only=False)
+# # model.eval()
+
+
+# # # Define any transforms your model requires (customize as needed)
+# # transform = transforms.Compose([
+# #     transforms.ToPILImage(),
+# #     transforms.Resize((224, 224)),
+# #     transforms.ToTensor(),
+# #     # Add normalization if your model expects it
+# # ])
+
+# # class LoginRequest(BaseModel):
+# #     email: str
+# #     password: str
+
+# # class UserInputRequest(BaseModel):
+# #     video_url: str
+# #     supervisor: str
+# #     vehicle_number: str
+
+# # class ProcessVideoRequest(BaseModel):
+# #     video_url: str
+
+# # @app.post("/login")
+# # def login(data: LoginRequest):
+# #     if data.email == "test@example.com" and data.password == "password123":
+# #         return {"message": "Login successful"}
+# #     raise HTTPException(status_code=401, detail="Invalid email or password")
+
+# # @app.post("/submit-info")
+# # def submit_info(data: UserInputRequest):
+# #     return {"message": "User info received", "data": data}
+
+# # def download_video(url: str, save_path="temp_video.mp4"):
+# #     response = requests.get(url, stream=True)
+# #     if response.status_code != 200:
+# #         raise Exception(f"Failed to download video: status {response.status_code}")
+# #     with open(save_path, "wb") as f:
+# #         for chunk in response.iter_content(chunk_size=8192):
+# #             f.write(chunk)
+
+# # def process_video_frames(video_path):
+# #     cap = cv2.VideoCapture(video_path)
+# #     results = []
+# #     while True:
+# #         ret, frame = cap.read()
+# #         if not ret:
+# #             break
+# #         # Preprocess frame for model
+# #         input_tensor = transform(frame).unsqueeze(0)  # Add batch dim
+# #         with torch.no_grad():
+# #             output = model(input_tensor)
+# #         # Assume output is tensor, convert to list or process as needed
+# #         output_data = output.cpu().numpy().tolist()
+# #         results.append(output_data)
+# #     cap.release()
+# #     return results
+# # @app.post("/process-video")
+# # async def process_video(data: ProcessVideoRequest):
+# #     video_url = data.video_url
+    
+# #     # Load video frames from URL (download or direct stream)
+# #     frames = load_frames_from_video(video_url)
+    
+# #     # Run model inference on frames
+# #     detections = []
+# #     for i, frame in enumerate(frames):
+# #         output = model_inference(frame)
+# #         detections.append({
+# #             "frame": i,
+# #             "objects": output_to_objects(output)
+# #         })
+    
+# #     return {"result": detections}
+
+# # # @app.post("/process-video")
+# # # def process_video(data: ProcessVideoRequest):
+# # #     # Simulate processing result
+# # #     dummy_result = [
+# # #         {"frame": 1, "objects_detected": 2, "details": {"car": 1, "person": 1}},
+# # #         {"frame": 2, "objects_detected": 1, "details": {"car": 1}},
+# # #     ]
+# # #     return {"result": dummy_result}
+
+
+
+# import pathlib
+# pathlib.PosixPath = pathlib.WindowsPath
+
+# from fastapi.responses import FileResponse, JSONResponse
+# from fastapi import FastAPI, HTTPException
+# from pydantic import BaseModel
+# from fastapi.middleware.cors import CORSMiddleware
+# import torch
+# import requests
+# import cv2
+# import tempfile
+# import os
+# from torchvision import transforms
+# from PIL import Image
+# from fastapi import File, UploadFile, HTTPException, Form, Request
+
+# from fastapi import FastAPI
+# from fastapi.middleware.cors import CORSMiddleware
+
+# app = FastAPI()
+# @app.get("/video/{filename}")
+# def get_video(filename: str):
+#     video_path = f"{filename}"
+#     return FileResponse(video_path, media_type="video/mp4")
+
+
+# origins = [
+#     "http://localhost:3000",  # React dev server
+#     "http://localhost:3001",  # if used
+#     # Add other origins if needed
+# ]
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,       # or ["*"] to allow all origins (for dev only)
+#     allow_credentials=True,
+#     allow_methods=["*"],         # allow all HTTP methods (GET, POST, etc.)
+#     allow_headers=["*"],         # allow all headers
+# )
+
+# # Load YOLOv5 model with torch.hub from local path
+# YOLOV5_FULLPATH = "D:/Vchanel/Box_detection_web/yolov5"
+# WEIGHTS_PATH = "D:/Vchanel/Box_detection_web/backend/best_demo_allbox.pt"
+# CONF_THRESHOLD = 0.8
+
+# print("Loading YOLOv5 model...")
+# model = torch.hub.load(
+#     YOLOV5_FULLPATH,
+#     'custom',
+#     path=WEIGHTS_PATH,
+#     source='local',
+#     force_reload=False
+# )
+# model.eval()
+# print("Model loaded!")
+
+# # Load your other model weights (weights_only=False)
+# # If you have the YOLOv5 repo cloned locally, load from local source:
+# model = torch.hub.load('D:/Vchanel/Box_detection_web/yolov5', 'custom', path='D:/Vchanel/Box_detection_web/backend/best_demo_allbox.pt', source='local')
+# model.eval()
+
+# # Define any transforms your other model requires
+# transform = transforms.Compose([
+#     transforms.ToPILImage(),
+#     transforms.Resize((224, 224)),
+#     transforms.ToTensor(),
+#     # Add normalization if your model expects it
+# ])
+
+# # Data models for requests
+# class LoginRequest(BaseModel):
+#     email: str
+#     password: str
+
+# class UserInputRequest(BaseModel):
+#     video_url: str
+#     supervisor: str
+#     vehicle_number: str
+
+# class ProcessVideoRequest(BaseModel):
+#     video_url: str
+
+# class VideoURL(BaseModel):
+#     url: str
+
+# # Existing login endpoint
+
+# @app.post("/login")
+# def login(data: LoginRequest):
+#     if data.email == "test@example.com" and data.password == "password123":
+#         return {"message": "Login successful"}
+#     raise HTTPException(status_code=401, detail="Invalid email or password")
+
+# # Existing submit-info endpoint
+# # @app.post("/submit-info")
+# # def submit_info(data: UserInputRequest):
+# #     return {"message": "User info received", "data": data}
+
+# UPLOAD_DIR = "uploaded_videos"
+# os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# @app.post("/submit-info")
+# async def submit_info(
+#     request: Request,
+#     file: UploadFile = File(None),
+#     video_url: str = Form(None),
+#     supervisor: str = Form(...),
+#     vehicle_number: str = Form(...)
+# ):
+#     try:
+#         # If frontend sends JSON (application/json)
+#         if request.headers.get("content-type", "").startswith("application/json"):
+#             data = await request.json()
+#             video_url = data.get("video_url")
+#             supervisor = data.get("supervisor")
+#             vehicle_number = data.get("vehicle_number")
+#             file = None  # No uploaded file in JSON case
+
+#         video_source = None
+
+#         # If file uploaded
+#         if file:
+#             file_location = os.path.join(UPLOAD_DIR, file.filename)
+#             contents = await file.read()
+#             with open(file_location, "wb") as f:
+#                 f.write(contents)
+#             video_source = f"File saved at {file_location}"
+
+#         # If only URL provided
+#         elif video_url:
+#             video_source = video_url
+
+#         else:
+#             return JSONResponse(status_code=400, content={"detail": "No video file or URL provided"})
+
+#         # Validate other form fields
+#         if not supervisor or not vehicle_number:
+#             return JSONResponse(status_code=400, content={"detail": "Missing supervisor or vehicle number"})
+
+#         # Return success response with received data
+#         return {
+#             "message": "Success",
+#             "video_source": video_source,
+#             "supervisor": supervisor,
+#             "vehicle_number": vehicle_number,
+#         }
+#     except Exception as e:
+#         return JSONResponse(status_code=500, content={"detail": str(e)})
+# # Video downloading helper for process_video_frames
+# def download_video(url: str, save_path="temp_video.mp4"):
+#     response = requests.get(url, stream=True)
+#     if response.status_code != 200:
+#         raise Exception(f"Failed to download video: status {response.status_code}")
+#     with open(save_path, "wb") as f:
+#         for chunk in response.iter_content(chunk_size=8192):
+#             f.write(chunk)
+
+# # Process video frames using the transform and model2 (your second model)
+# def process_video_frames(video_path):
+#     cap = cv2.VideoCapture(video_path)
+#     results = []
+#     while True:
+#         ret, frame = cap.read()
+#         if not ret:
+#             break
+#         input_tensor = transform(frame).unsqueeze(0)  # Add batch dim
+#         with torch.no_grad():
+#             output = model(input_tensor)
+#         output_data = output.cpu().numpy().tolist()
+#         results.append(output_data)
+#     cap.release()
+#     return results
+
+
+# # First /process-video endpoint that downloads video, runs YOLOv5 model inference frame by frame
+
+# class VideoPath(BaseModel):
+#     path: str  # local file path
+#     url: str  # video URL
+
+# @app.post("/upload-video/")
+# async def upload_video(file: UploadFile = File(...)):
+#     # You can optionally check content-type here (e.g., video/mp4)
+#     if not file.content_type.startswith("video/"):
+#         raise HTTPException(status_code=400, detail="Invalid file type. Please upload a video file.")
+
+#     try:
+#         save_path = f"uploaded_videos/{file.filename}"  # make sure folder exists or create it
+#         with open(save_path, "wb") as buffer:
+#             content = await file.read()
+#             buffer.write(content)
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
+
+#     return {"message": "File uploaded successfully", "filename": file.filename}
+
+
+# #both local file and url
+# @app.post("/process-video")
+# async def process_video(
+#     file: UploadFile = File(None),
+#     video_url: str = Form(None),  
+# ):
+#     video_path = None
+
+#     if file:
+#         # Save uploaded file temporarily
+#         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1])
+#         content = await file.read()
+#         temp_file.write(content)
+#         temp_file.close()
+#         video_path = temp_file.name
+#         print(f"Using uploaded video file: {video_path}")
+
+#     elif video_url:
+#         # Handle local file URL or path
+#         if video_url.startswith("file://") or os.path.exists(video_url):
+#             video_path = video_url.replace("file://", "")
+#             if not os.path.exists(video_path):
+#                 raise HTTPException(status_code=400, detail=f"Local file not found: {video_path}")
+#             print(f"Using local video file: {video_path}")
+
+#         else:
+#             # Download video from remote URL
+#             try:
+#                 print(f"Downloading video from URL: {video_url}")
+#                 tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+#                 response = requests.get(video_url, stream=True)
+#                 response.raise_for_status()
+#                 for chunk in response.iter_content(chunk_size=8192):
+#                     if chunk:
+#                         tmp_file.write(chunk)
+#                 tmp_file.close()
+#                 video_path = tmp_file.name
+#                 print(f"Video downloaded successfully to: {video_path}")
+#             except Exception as e:
+#                 print(f"Failed to download video: {str(e)}")
+#                 raise HTTPException(status_code=400, detail=f"Failed to download video: {str(e)}")
+
+#     else:
+#         raise HTTPException(status_code=400, detail="No video file or URL provided")
+
+#     # Open video capture
+#     cap = cv2.VideoCapture(video_path)
+#     if not cap.isOpened():
+#         if video_path != video_url and os.path.exists(video_path):
+#             os.remove(video_path)
+#         raise HTTPException(status_code=400, detail="Could not open video file")
+
+#     results_list = []
+
+#     while True:
+#         ret, frame = cap.read()
+#         if not ret:
+#             break
+
+#         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#         results = model(frame_rgb)  # your detection model inference call
+#         detections = results.pandas().xyxy[0]
+
+#         frame_detections = []
+#         for _, row in detections.iterrows():
+#             if row['confidence'] >= CONF_THRESHOLD:
+#                 frame_detections.append({
+#                     'class': row['name'],
+#                     'confidence': float(row['confidence']),
+#                     'bbox': [
+#                         float(row['xmin']),
+#                         float(row['ymin']),
+#                         float(row['xmax']),
+#                         float(row['ymax'])
+#                     ]
+#                 })
+
+#         results_list.append(frame_detections)
+
+#     cap.release()
+
+#     # Clean up downloaded or temp file if different from original URL path
+#     if video_path and video_url and video_path != video_url and os.path.exists(video_path):
+#         os.remove(video_path)
+
+#     return {"results": results_list}
+
+# # Second /process-video endpoint that uses process_video_frames helper and model2 (commented out originally)
+# @app.post("/process-video/split-model")
+# async def process_video_split(data: ProcessVideoRequest):
+#     video_url = data.video_url
+#     # You may download video here or in helper
+#     video_path = "temp_video.mp4"
+#     download_video(video_url, video_path)
+#     detections = process_video_frames(video_path)
+#     os.remove(video_path)
+#     return {"result": detections}
+    
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+# # Note: Ensure you have the correct path to your model weights and YOLOv5 directory.
+
+
+
+###below code is run the video on brower##
+
+# import pathlib
+
+# pathlib.PosixPath = pathlib.WindowsPath
+
+# from fastapi.responses import FileResponse, JSONResponse
+# from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Request, WebSocket, WebSocketDisconnect
+# from pydantic import BaseModel
+# from fastapi.middleware.cors import CORSMiddleware
+
+# import torch
+# import requests
+# import cv2
+# import tempfile
+# import os
+# from torchvision import transforms
+# import base64
+# import numpy as np
+
+# app = FastAPI()
+
+# # CORS Settings
+# origins = [
+#     "http://localhost:3000",
+#     "http://localhost:3001",
+# ]
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+
+# YOLOV5_FULLPATH = "D:/Vchanel/Box_detection_web/yolov5"
+# WEIGHTS_PATH = "D:/Vchanel/Box_detection_web/backend/best_demo_allbox.pt"
+# CONF_THRESHOLD = 0.8
+
+# print("Loading YOLOv5 model...")
+# model = torch.hub.load(
+#     YOLOV5_FULLPATH,
+#     'custom',
+#     path=WEIGHTS_PATH,
+#     source='local',
+#     force_reload=False
+# )
+# model.eval()
+# print("Model loaded!")
+
+
+# transform = transforms.Compose([
+#     transforms.ToPILImage(),
+#     transforms.Resize((224, 224)),
+#     transforms.ToTensor(),
+# ])
+
+
+# class LoginRequest(BaseModel):
+#     email: str
+#     password: str
+
+# class UserInputRequest(BaseModel):
+#     video_url: str
+#     supervisor: str
+#     vehicle_number: str
+
+# class ProcessVideoRequest(BaseModel):
+#     video_url: str
+
+
+# @app.get("/video/{filename}")
+# def get_video(filename: str):
+#     video_path = f"{filename}"
+#     if not os.path.isfile(video_path):
+#         raise HTTPException(status_code=404, detail="Video not found")
+#     return FileResponse(video_path, media_type="video/mp4")
+
+
+# @app.websocket("/stream-detections")
+# async def websocket_endpoint(websocket: WebSocket):
+#     await websocket.accept()
+#     try:
+#         # Receive initial JSON with video info
+#         data = await websocket.receive_json()
+#         video_url = data.get("video_url")
+#         if not video_url:
+#             await websocket.close(code=1003)
+#             return
+
+#         # Open video capture
+#         cap = cv2.VideoCapture(video_url)
+#         if not cap.isOpened():
+#             await websocket.close(code=1003)
+#             return
+
+#         while True:
+#             ret, frame = cap.read()
+#             if not ret:
+#                 break
+
+#             # Run detection (YOLOv5 expects RGB)
+#             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#             results = model(rgb_frame)
+#             detections = results.pandas().xyxy[0]
+
+#             # Draw boxes on the frame
+#             for _, row in detections.iterrows():
+#                 if row['confidence'] >= CONF_THRESHOLD:
+#                     xmin, ymin, xmax, ymax = map(int, [row['xmin'], row['ymin'], row['xmax'], row['ymax']])
+#                     label = f"{row['name']} {row['confidence']:.2f}"
+#                     color = (0, 255, 0)  # Green box
+#                     cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color, 2)
+#                     cv2.putText(frame, label, (xmin, ymin-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+
+#             # Encode frame to JPEG
+#             _, buffer = cv2.imencode('.jpg', frame)
+#             frame_bytes = base64.b64encode(buffer).decode()
+
+#             # Send JSON with base64 frame
+#             await websocket.send_json({"frame": frame_bytes})
+
+#         cap.release()
+#         await websocket.send_json({"status": "done"})
+#         await websocket.close()
+#     except WebSocketDisconnect:
+#         print("WebSocket client disconnected")
+#     except Exception as e:
+#         print("WebSocket error:", e)
+#         await websocket.close(code=1011)
+
+
+
+# # Include your other existing REST endpoints here unchanged
+# # such as /login, /submit-info, /process-video etc.
+
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+
+
+# import pathlib
+# pathlib.PosixPath = pathlib.WindowsPath
+
+# from fastapi.responses import FileResponse, JSONResponse
+# from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Request, WebSocket, WebSocketDisconnect
+# from pydantic import BaseModel
+# from fastapi.middleware.cors import CORSMiddleware
+
+# import torch
+# import requests
+# import cv2
+# import tempfile
+# import os
+# from torchvision import transforms
+# import base64
+# import numpy as np
+
+# app = FastAPI()
+
+# # CORS Settings
+# origins = [
+#     "http://localhost:3000",
+#     "http://localhost:3001",
+# ]
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+
+# YOLOV5_FULLPATH = "D:/Vchanel/Box_detection_web/yolov5"
+# WEIGHTS_PATH = "D:/Vchanel/Box_detection_web/backend/best_demo_allbox.pt"
+# CONF_THRESHOLD = 0.8
+
+# print("Loading YOLOv5 model...")
+# model = torch.hub.load(
+#     YOLOV5_FULLPATH,
+#     'custom',
+#     path=WEIGHTS_PATH,
+#     source='local',
+#     force_reload=False
+# )
+# model.eval()
+# print("Model loaded!")
+
+# transform = transforms.Compose([
+#     transforms.ToPILImage(),
+#     transforms.Resize((224, 224)),
+#     transforms.ToTensor(),
+# ])
+
+# class LoginRequest(BaseModel):
+#     email: str
+#     password: str
+
+# class UserInputRequest(BaseModel):
+#     video_url: str
+#     supervisor: str
+#     vehicle_number: str
+
+# class ProcessVideoRequest(BaseModel):
+#     video_url: str
+
+# @app.get("/video/{filename}")
+# def get_video(filename: str):
+#     video_path = f"{filename}"
+#     if not os.path.isfile(video_path):
+#         raise HTTPException(status_code=404, detail="Video not found")
+#     return FileResponse(video_path, media_type="video/mp4")
+
+# @app.websocket("/stream-detections")
+# async def websocket_endpoint(websocket: WebSocket):
+#     await websocket.accept()
+#     try:
+#         data = await websocket.receive_json()
+#         video_url = data.get("video_url")
+#         if not video_url:
+#             await websocket.close(code=1003)
+#             return
+
+#         while True:
+#     ret, frame = cap.read()
+#     if not ret:
+
+#     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#     results = model(frame_rgb)
+#     detections = results.pandas().xyxy[0]
+
+#     count = 0  # Initialize count of detected boxes this frame
+
+#     for _, row in detections.iterrows():
+#         if row['confidence'] >= CONF_THRESHOLD:
+#             count += 1
+#             xmin, ymin, xmax, ymax = map(int, [row['xmin'], row['ymin'], row['xmax'], row['ymax']])
+#             label = f"{row['name']} {row['confidence']:.2f}"
+#             color = (0, 255, 0)
+#             cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color, 2)
+#             cv2.putText(frame, label, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+
+#     # Display count text in red at top-left corner
+#     cv2.putText(frame, f"Count: {count}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
+
+#     # Optional: resize frame to smaller size to fit screen better
+#     frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+
+#     cv2.imshow("Live Detection", frame)
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
+
+#     #         _, buffer = cv2.imencode('.jpg', frame)
+#     #         frame_bytes = base64.b64encode(buffer).decode()
+
+#     #         await websocket.send_json({"frame": frame_bytes})
+#     #     cap.release()
+#     #     await websocket.send_json({"status": "done"})
+#     #     await websocket.close()
+#     # except WebSocketDisconnect:
+#     #     print("WebSocket client disconnected")
+#     # except Exception as e:
+#     #     print("WebSocket error:", e)
+#     #     await websocket.close(code=1011)
+        
+
+# @app.post("/submit-info")
+# async def submit_info(
+#     request: Request,
+#     file: UploadFile = File(None),
+#     video_url: str = Form(None),
+#     supervisor: str = Form(...),
+#     vehicle_number: str = Form(...)
+# ):
+#     try:
+#         if request.headers.get("content-type", "").startswith("application/json"):
+#             data = await request.json()
+#             video_url = data.get("video_url")
+#             supervisor = data.get("supervisor")
+#             vehicle_number = data.get("vehicle_number")
+#             file = None
+
+#         video_source = None
+
+#         if file:
+#             UPLOAD_DIR = "uploaded_videos"
+#             os.makedirs(UPLOAD_DIR, exist_ok=True)
+#             file_location = os.path.join(UPLOAD_DIR, file.filename)
+#             contents = await file.read()
+#             with open(file_location, "wb") as f:
+#                 f.write(contents)
+#             video_source = f"File saved at {file_location}"
+
+#         elif video_url:
+#             video_source = video_url
+
+#         else:
+#             return JSONResponse(status_code=400, content={"detail": "No video file or URL provided"})
+
+#         if not supervisor or not vehicle_number:
+#             return JSONResponse(status_code=400, content={"detail": "Missing supervisor or vehicle number"})
+
+#         return {
+#             "message": "Success",
+#             "video_source": video_source,
+#             "supervisor": supervisor,
+#             "vehicle_number": vehicle_number,
+#         }
+#     except Exception as e:
+#         return JSONResponse(status_code=500, content={"detail": str(e)})
+
+# def download_video(url: str, save_path="temp_video.mp4"):
+#     response = requests.get(url, stream=True)
+#     if response.status_code != 200:
+#         raise Exception(f"Failed to download video: status {response.status_code}")
+#     with open(save_path, "wb") as f:
+#         for chunk in response.iter_content(chunk_size=8192):
+#             f.write(chunk)
+
+# def process_video_frames(video_path):
+#     cap = cv2.VideoCapture(video_path)
+#     results = []
+#     while True:
+#         ret, frame = cap.read()
+#         if not ret:
+#             break
+#         input_tensor = transform(frame).unsqueeze(0)
+#         with torch.no_grad():
+#             output = model(input_tensor)
+#         output_data = output.cpu().numpy().tolist()
+#         results.append(output_data)
+#     cap.release()
+#     return results
+# @app.post("/process-video")
+# async def process_video(
+#     file: UploadFile = File(None),
+#     video_url: str = Form(None),
+# ):
+#     video_path = None
+
+#     try:
+#         if file:
+#             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1])
+#             content = await file.read()
+#             temp_file.write(content)
+#             temp_file.close()
+#             video_path = temp_file.name
+#             print(f"Using uploaded video file: {video_path}")
+
+#         elif video_url:
+#             if video_url.startswith("file://") or os.path.exists(video_url):
+#                 video_path = video_url.replace("file://", "")
+#                 if not os.path.exists(video_path):
+#                     raise HTTPException(status_code=400, detail=f"Local file not found: {video_path}")
+#                 print(f"Using local video file: {video_path}")
+#             else:
+#                 print(f"Downloading video from URL: {video_url}")
+#                 tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+#                 response = requests.get(video_url, stream=True)
+#                 response.raise_for_status()
+#                 for chunk in response.iter_content(chunk_size=8192):
+#                     if chunk:
+#                         tmp_file.write(chunk)
+#                 tmp_file.close()
+#                 video_path = tmp_file.name
+#                 print(f"Video downloaded successfully to: {video_path}")
+#         else:
+#             raise HTTPException(status_code=400, detail="No video file or URL provided")
+
+#         cap = cv2.VideoCapture(video_path)
+#         if not cap.isOpened():
+#             if video_path != video_url and os.path.exists(video_path):
+#                 os.remove(video_path)
+#             raise HTTPException(status_code=400, detail="Could not open video file")
+
+#         results_list = []
+
+#         while True:
+#             ret, frame = cap.read()
+#             if not ret:
+#                 break
+
+#             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#             results = model(frame_rgb)
+#             detections = results.pandas().xyxy[0]
+
+#             # Draw detections on frame for live display
+#             for _, row in detections.iterrows():
+#                 if row['confidence'] >= CONF_THRESHOLD:
+#                     xmin, ymin, xmax, ymax = map(int, [row['xmin'], row['ymin'], row['xmax'], row['ymax']])
+#                     label = f"{row['name']} {row['confidence']:.2f}"
+#                     color = (0, 255, 0)
+#                     cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color, 2)
+#                     cv2.putText(frame, label, (xmin, ymin-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+
+#             # Show frame live in separate window
+#             frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)  # Reduces size by 50%
+#             cv2.imshow("Live Detection", frame)
+#             if cv2.waitKey(1) & 0xFF == ord('q'):
+#                 break
+
+#             frame_detections = []
+#             for _, row in detections.iterrows():
+#                 if row['confidence'] >= CONF_THRESHOLD:
+#                     frame_detections.append({
+#                         'class': row['name'],
+#                         'confidence': float(row['confidence']),
+#                         'bbox': [
+#                             float(row['xmin']),
+#                             float(row['ymin']),
+#                             float(row['xmax']),
+#                             float(row['ymax'])
+#                         ]
+#                     })
+
+#             results_list.append(frame_detections)
+
+#         cap.release()
+#         cv2.destroyAllWindows()
+
+#         if video_path and video_url and video_path != video_url and os.path.exists(video_path):
+#             os.remove(video_path)
+
+#         return {"results": results_list}
+
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+# @app.post("/process-video/split-model")
+# async def process_video_split(data: ProcessVideoRequest):
+#     video_url = data.video_url
+#     video_path = "temp_video.mp4"
+#     download_video(video_url, video_path)
+#     detections = process_video_frames(video_path)
+#     os.remove(video_path)
+#     return {"result": detections}
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+
+# import pathlib
+# pathlib.PosixPath = pathlib.WindowsPath
+
+# from fastapi import FastAPI, HTTPException, File, UploadFile, Form, Request, BackgroundTasks
+# from fastapi.responses import FileResponse, JSONResponse
+# from fastapi.middleware.cors import CORSMiddleware
+
+# import torch
+# import cv2
+# import os
+# import tempfile
+# import requests
+# from torchvision import transforms
+# from email.mime.text import MIMEText
+# from email.mime.multipart import MIMEMultipart
+# import smtplib
+# import logging
+# import datetime
+
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s - %(levelname)s - %(message)s"
+# )
+# logger = logging.getLogger(__name__)
+
+# app = FastAPI()
+
+# origins = [
+#     "http://localhost:3000",
+#     "http://localhost:3001",
+# ]
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+
+# YOLOV5_FULLPATH = "D:/Vchanel/Box_detection_web/yolov5"
+# WEIGHTS_PATH = "D:/Vchanel/Box_detection_web/backend/best_demo_allbox.pt"
+# CONF_THRESHOLD = 0.8
+
+# logger.info("Loading YOLOv5 model...")
+# model = torch.hub.load(
+#     YOLOV5_FULLPATH,
+#     'custom',
+#     path=WEIGHTS_PATH,
+#     source='local',
+#     force_reload=False
+# )
+# model.eval()
+# logger.info("Model loaded!")
+
+# transform = transforms.Compose([
+#     transforms.ToPILImage(),
+#     transforms.Resize((224, 224)),
+#     transforms.ToTensor(),
+# ])
+
+# count = 0
+# line_position = None
+# object_trackers = {}
+# next_object_id = 0
+
+# def get_centroid(box):
+#     xmin, ymin, xmax, ymax = box
+#     cx = int((xmin + xmax) / 2)
+#     cy = int((ymin + ymax) / 2)
+#     return cx, cy
+
+# def is_crossing_line(prev_pos, current_pos, line_y):
+#     return prev_pos < line_y and current_pos >= line_y
+
+# def send_count_email(count: int, to_email: str):
+#     logger.info(f"Preparing to send email for count: {count}")
+    
+#     sender_email = "abinayabi55@gmail.com"
+#     sender_password = "vepmrbuzypehztdh"  # Your Gmail app password
+#     smtp_server = "smtp.gmail.com"
+#     smtp_port = 587
+
+#     message = MIMEMultipart()
+#     message["From"] = sender_email
+#     message["To"] = to_email
+#     message["Subject"] = "Video Object Count Notification"
+
+#     body = f"The total count of objects crossing the line is: {count}"
+#     message.attach(MIMEText(body, "plain"))
+
+#     try:
+#         server = smtplib.SMTP(smtp_server, smtp_port)
+#         server.set_debuglevel(1)  # Enable SMTP debug info
+#         server.starttls()
+#         server.login(sender_email, sender_password)
+#         server.sendmail(sender_email, to_email, message.as_string())
+#         server.quit()
+#         logger.info("Email sent successfully!")
+#     except smtplib.SMTPAuthenticationError as e:
+#         logger.error(f"SMTP auth error: {e}")
+#     except smtplib.SMTPException as e:
+#         logger.error(f"SMTP error occurred: {e}")
+#     except Exception as e:
+#         logger.error(f"Unexpected error sending email: {e}")
+
+# @app.get("/video/{filename}")
+# def get_video(filename: str):
+#     video_path = f"{filename}"
+#     if not os.path.isfile(video_path):
+#         raise HTTPException(status_code=404, detail="Video not found")
+#     return FileResponse(video_path, media_type="video/mp4")
+
+# @app.post("/process-video")
+# async def process_video(
+#     file: UploadFile = File(None),
+#     video_url: str = Form(None),
+#     background_tasks: BackgroundTasks = BackgroundTasks()  # Added background_tasks parameter
+# ):
+#     global count, next_object_id, object_trackers, line_position
+
+#     count = 0
+#     object_trackers = {}
+#     next_object_id = 0
+
+#     try:
+#         if file:
+#             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1])
+#             content = await file.read()
+#             temp_file.write(content)
+#             temp_file.close()
+#             video_path = temp_file.name
+#         elif video_url:
+#             if video_url.startswith("file://") or os.path.exists(video_url):
+#                 video_path = video_url.replace("file://", "")
+#                 if not os.path.exists(video_path):
+#                     raise HTTPException(status_code=400, detail=f"Local file not found: {video_path}")
+#             else:
+#                 tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+#                 response = requests.get(video_url, stream=True)
+#                 response.raise_for_status()
+#                 for chunk in response.iter_content(chunk_size=8192):
+#                     if chunk:
+#                         tmp_file.write(chunk)
+#                 tmp_file.close()
+#                 video_path = tmp_file.name
+#         else:
+#             raise HTTPException(status_code=400, detail="No video file or URL provided")
+
+#         cap = cv2.VideoCapture(video_path)
+#         fps = cap.get(cv2.CAP_PROP_FPS)
+
+#         ret, frame = cap.read()
+#         if not ret:
+#             raise HTTPException(status_code=400, detail="Empty video stream.")
+#         height, width = frame.shape[:2]
+#         line_position = height // 2
+
+#         start_time = datetime.datetime.now()
+#         logger.info(f"Video processing started at: {start_time}")
+#         frame_number = 0
+
+#         cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+#         while True:
+#             ret, frame = cap.read()
+#             if not ret:
+#                 break
+
+#             frame_number += 1
+
+#             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#             results = model(frame_rgb)
+#             detections = results.pandas().xyxy[0]
+
+#             cv2.line(frame, (width // 2, 0), (width // 2, height), (0, 0, 255), 2)
+
+#             current_centroids = []
+#             for _, row in detections.iterrows():
+#                 if row['confidence'] >= CONF_THRESHOLD:
+#                     xmin, ymin, xmax, ymax = map(int, [row['xmin'], row['ymin'], row['xmax'], row['ymax']])
+#                     centroid = get_centroid((xmin, ymin, xmax, ymax))
+#                     current_centroids.append((centroid, (xmin, ymin, xmax, ymax)))
+
+#             updated_trackers = {}
+#             used_ids = set()
+#             for centroid, bbox in current_centroids:
+#                 cx, cy = centroid
+#                 assigned_id = None
+#                 min_dist = float('inf')
+#                 for obj_id, prev_cy in object_trackers.items():
+#                     if obj_id in used_ids:
+#                         continue
+#                     dist = abs(prev_cy - cy)
+#                     if dist < 50 and dist < min_dist:
+#                         min_dist = dist
+#                         assigned_id = obj_id
+
+#                 if assigned_id is None:
+#                     assigned_id = next_object_id
+#                     next_object_id += 1
+
+#                 if assigned_id in object_trackers:
+#                     if is_crossing_line(object_trackers[assigned_id], cy, line_position):
+#                         count += 1
+#                 updated_trackers[assigned_id] = cy
+#                 used_ids.add(assigned_id)
+
+#                 label = f"{row['name']} {row['confidence']:.2f} ID:{assigned_id}"
+#                 color = (0, 255, 0)
+#                 xmin, ymin, xmax, ymax = bbox
+#                 cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color, 2)
+#                 cv2.putText(frame, label, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+#                 cv2.circle(frame, centroid, 5, (255, 0, 0), -1)
+
+#             object_trackers = updated_trackers
+
+#             cv2.putText(frame, f"Count: {count}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (0, 0, 255), 2)
+#             frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+#             cv2.imshow("Live Detection with Counting", frame)
+
+#             key = cv2.waitKey(1) & 0xFF
+#             if key == ord('q'):
+#                 logger.info(f"Video processing stopped by 'q', count={count}")
+#                 break
+           
+
+#         cap.release()
+#         cv2.destroyAllWindows()
+
+#         end_time = datetime.datetime.now()
+#         logger.info(f"Video processing ended at: {end_time}")
+#         elapsed_time = end_time - start_time
+#         logger.info(f"Total processing time: {elapsed_time}")
+#         logger.info(f"Total boxes counted crossing line: {count}")
+        
+#         # Schedule email sending as background task here
+#         background_tasks.add_task(send_count_email, count, "abinayabi55@gmail.com")
+
+#         return {
+#             "count": count,
+#             "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+#             "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+#             "processing_duration_sec": elapsed_time.total_seconds()
+#         }
+
+#     except Exception as e:
+#         logger.error(f"Error in processing video: {e}")
+#         raise HTTPException(status_code=500, detail=str(e))
+
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+    
+perfect code
+
+# import pathlib
+# pathlib.PosixPath = pathlib.WindowsPath
+
+# from fastapi import FastAPI, HTTPException, File, UploadFile, Form, BackgroundTasks
+# from fastapi.responses import FileResponse, JSONResponse
+# from fastapi.middleware.cors import CORSMiddleware
+# from fastapi.exceptions import RequestValidationError
+# from fastapi.encoders import jsonable_encoder
+# from fastapi import status
+# from dotenv import load_dotenv
+# import os
+
+
+
+# import torch
+# import cv2
+# import os
+# import tempfile
+# import requests
+# from torchvision import transforms
+# from email.mime.text import MIMEText
+# from email.mime.multipart import MIMEMultipart
+# import smtplib
+# import logging
+# import datetime
+# import numpy as np
+# from collections import deque
+
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s - %(levelname)s - %(message)s"
+# )
+# logger = logging.getLogger(__name__)
+
+# app = FastAPI()
+
+# origins = [
+#     "http://localhost:3000",
+#     "http://localhost:3001",
+# ]
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+
+# from dotenv import load_dotenv
+# import os
+
+# # Load environment variables
+# load_dotenv()
+
+# # Fetch values from .env
+# sender_email = os.getenv("EMAIL_ADDRESS")
+# sender_password = os.getenv("EMAIL_PASSWORD")
+# receiver_email = os.getenv("RECEIVER_EMAIL")
+
+# YOLOV5_FULLPATH = "D:/Vchanel/Box_detection_web/yolov5"
+
+# MODEL_PATHS = {
+#     "Single Box": {
+#         "weights": "D:/Vchanel/Box_detection_web/backend/best5.pt",
+#         "classes": ["box"]
+#     },
+#     "Multiple Box": {
+#         "weights": "D:/Vchanel/Box_detection_web/backend/best_demo2.pt",
+#         "classes": ["box"]
+#     },
+#     "4_5_6 Box": {
+#         "weights": "D:/Vchanel/Box_detection_web/backend/best_demo_allbox.pt",
+#         "classes": ["4box", "5box", "6box"]
+#     }
+# }
+
+# CONF_THRESHOLD = 0.5
+
+
+# def smooth_box(history):
+#     xs1, ys1, xs2, ys2 = zip(*history)
+#     return int(np.mean(xs1)), int(np.mean(ys1)), int(np.mean(xs2)), int(np.mean(ys2))
+
+# #Calculates center point (centroid) 
+
+# def get_centroid(box):
+#     xmin, ymin, xmax, ymax = box
+#     cx = int((xmin + xmax) / 2)
+#     cy = int((ymin + ymax) / 2)
+#     return cx, cy
+
+
+# def is_crossing_line(prev_pos, current_pos, line_y):
+#     return prev_pos < line_y and current_pos >= line_y
+
+
+# def send_count_email(count: int, to_email: str, start_time: datetime.datetime, end_time: datetime.datetime,
+#                      supervisor_name: str, vehicle_no: str, class_counts: dict):
+#     logger.info(f"Preparing to send email for count: {count}")
+
+#     sender_email = os.getenv("EMAIL_ADDRESS")
+#     sender_password = os.getenv("EMAIL_PASSWORD")# Your Gmail app password
+#     smtp_server = "smtp.gmail.com"
+#     smtp_port = 587
+
+#     message = MIMEMultipart()
+#     message["From"] = sender_email
+#     message["To"] = to_email
+#     message["Subject"] = "Box Count"
+
+#     class_counts_str = "\n".join(f"{cls}: {cnt}" for cls, cnt in class_counts.items())
+
+#     body = (f"Supervisor Name: {supervisor_name}\n"
+#             f"Vehicle Number: {vehicle_no}\n\n"
+#             f"Total count of Boxes : {count}\n\n"
+#             f"Counts per class:\n{class_counts_str}\n\n"
+#             f"Video processing started at: {start_time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+#             f"Video processing ended at: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+
+#     message.attach(MIMEText(body, "plain"))
+
+#     try:
+#         server = smtplib.SMTP(smtp_server, smtp_port)
+#         server.set_debuglevel(1)
+#         server.starttls()
+#         server.login(sender_email, sender_password)
+#         server.sendmail(sender_email, to_email, message.as_string())
+#         server.quit()
+#         logger.info("Email sent successfully!")
+#     except Exception as e:
+#         logger.error(f"Error sending email: {e}")
+
+
+# @app.get("/video/{filename}")
+# def get_video(filename: str):
+#     video_path = f"{filename}"
+#     if not os.path.isfile(video_path):
+#         raise HTTPException(status_code=404, detail="Video not found")
+#     return FileResponse(video_path, media_type="video/mp4")
+
+
+# @app.post("/process-video")
+# async def process_video(
+#     video_url: str = Form(None),
+#     supervisor_name: str = Form(...),
+#     vehicle_no: str = Form(...),
+#     selected_model: str = Form(...),
+#     background_tasks: BackgroundTasks = BackgroundTasks()
+# ):
+#     if selected_model not in MODEL_PATHS:
+#         raise HTTPException(status_code=400, detail=f"Unknown model: {selected_model}")
+
+#     config = MODEL_PATHS[selected_model]
+#     weights_path = config["weights"]
+#     classes = config["classes"]
+
+#     count = 0
+#     object_trackers = {}
+#     next_object_id = 0
+#     class_counts = {}
+
+#     box_history = {}
+#     box_confidence = {}
+#     active_objects = {}   # track object still present in the frame
+#     object_states = {}  # 0=outside, 1=inside
+#     region_width = 40
+
+#     try: 
+#         if video_url:
+#             if video_url.startswith("file://") or os.path.exists(video_url):
+#                 video_path = video_url.replace("file://", "")
+#                 if not os.path.exists(video_path):
+#                     raise HTTPException(status_code=400, detail=f"Local file not found: {video_path}")
+#             else:
+#                 tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+#                 response = requests.get(video_url, stream=True)
+#                 response.raise_for_status()
+#                 for chunk in response.iter_content(chunk_size=8192):
+#                     if chunk:
+#                         tmp_file.write(chunk)
+#                 tmp_file.close()
+#                 video_path = tmp_file.name
+#         else:
+#             raise HTTPException(status_code=400, detail="No video file or URL provided")
+        
+        
+#         # model loading
+
+#         model = torch.hub.load(
+#             YOLOV5_FULLPATH,
+#             'custom',
+#             path=weights_path,
+#             source='local',
+#             force_reload=False
+#         )
+#         model.eval()
+
+#         cap = cv2.VideoCapture(video_path)
+#         fps = cap.get(cv2.CAP_PROP_FPS)
+#         frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+#         frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        
+#         line_position = frame_width // 2   # vertical line position 
+
+#         start_time = datetime.datetime.now()
+#         logger.info(f"Video processing started at: {start_time}")
+
+#         allowed_classes = [cls.lower() for cls in classes]
+
+#         while True:
+#             ret, frame = cap.read()
+#             if not ret:
+#                 break            # No more frame it exits
+
+#             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#             results = model(frame_rgb)
+#             detections = results.pandas().xyxy[0]
+
+#             # Draw vertical red line for count zone
+#             cv2.line(frame, (line_position, 0), (line_position, frame_height), (0, 0, 255), 2)
+
+#             region_start = line_position - region_width
+#             region_end = line_position + region_width
+#             overlay = frame.copy()
+#             cv2.rectangle(overlay, (region_start, 0), (region_end, frame_height), (255, 0, 0), -1)
+#             frame = cv2.addWeighted(overlay, 0.2, frame, 0.8, 0)
+#             #cv2.rectangle(overlay, (region_start, 0), (region_end, frame_height), (0, 0, 255), -1)
+#             #frame = cv2.addWeighted(overlay, 0.15, frame, 0.85, 0)
+
+#             current_centroids = []
+
+#             for _, row in detections.iterrows():
+#                 cname = row['name'].lower()
+#                 if row['confidence'] < CONF_THRESHOLD or cname not in allowed_classes:
+#                     continue
+#                 xmin, ymin, xmax, ymax = map(int, [row['xmin'], row['ymin'], row['xmax'], row['ymax']])
+
+#                 if cname == "box":
+#                     cx = (xmin + xmax) // 2
+#                     cy = (ymin + ymax) // 2
+
+#                     matched_id = None
+#                     for oid, (pcx, pcy) in active_objects.items():
+#                         if abs(cx - pcx) < 50 and abs(cy - pcy) < 50:
+#                             matched_id = oid
+#                             break
+#                     if matched_id is None:
+#                         matched_id = next_object_id
+#                         object_id = next_object_id + 1 if 'object_id' in locals() else 1
+#                         next_object_id = object_id
+
+#                     active_objects[matched_id] = (cx, cy)
+
+#                     if matched_id not in box_history:
+#                         box_history[matched_id] = deque(maxlen=5)
+#                     box_history[matched_id].append((xmin, ymin, xmax, ymax))
+#                     box_confidence[matched_id] = row['confidence']
+
+#                     sm_x1, sm_y1, sm_x2, sm_y2 = smooth_box(box_history[matched_id])
+#                     if matched_id not in object_states:
+#                         object_states[matched_id] = 0
+#                     if region_start <= sm_x1 <= region_end:
+#                         if object_states[matched_id] == 0:
+#                             object_states[matched_id] = 1
+#                     else:
+#                         if object_states[matched_id] == 1:
+#                             count += 1
+#                             object_states[matched_id] = 0
+#                             class_counts["box"] = class_counts.get("box", 0) + 1
+
+#                     cv2.rectangle(frame, (sm_x1, sm_y1), (sm_x2, sm_y2), (0, 255, 0), 2)
+#                     cv2.putText(
+#                         frame, f"{cname} {row['confidence']:.2f}",
+#                         (sm_x1, sm_y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
+#                         0.5, (0, 255, 0), 2
+#                     )
+
+#                 elif cname in ["4box", "5box", "6box"]:
+#                     centroid = get_centroid((xmin, ymin, xmax, ymax))
+#                     current_centroids.append({
+#                         "centroid": centroid,
+#                         "bbox": (xmin, ymin, xmax, ymax),
+#                         "class_name": cname,
+#                         "confidence": row['confidence']
+#                     })
+
+#             updated_trackers = {}
+#             used_ids = set()
+            
+#             line_vertical = frame_height // 2  # vertical center line for 4/5/6 box counting
+
+#             for obj in current_centroids:
+#                 cx, cy = obj["centroid"]
+#                 bbox = obj["bbox"]
+#                 class_name = obj["class_name"]
+#                 confidence = obj["confidence"]
+
+#                 assigned_id = None
+#                 min_dist = float('inf')
+
+#                 for obj_id, prev_cy in object_trackers.items():
+#                     if obj_id in used_ids:
+#                         continue
+#                     dist = abs(prev_cy - cy)
+#                     if dist < 50 and dist < min_dist:
+#                         min_dist = dist
+#                         assigned_id = obj_id
+
+#                 if assigned_id is None:
+#                     assigned_id = next_object_id
+#                     next_object_id += 1
+
+#                 if assigned_id in object_trackers:
+#                     if is_crossing_line(object_trackers[assigned_id], cy, line_vertical):
+#                         increment = {"4box": 4, "5box": 5, "6box": 6}.get(class_name.lower(), 1)
+#                         count += increment
+#                         class_counts[class_name] = class_counts.get(class_name, 0) + 1
+
+#                 updated_trackers[assigned_id] = cy
+#                 used_ids.add(assigned_id)
+
+#                 xmin, ymin, xmax, ymax = bbox
+#                 color = (0, 255, 0)
+#                 label = f"{class_name} {confidence:.2f} ID:{assigned_id}"
+#                 cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color, 2)
+#                 cv2.putText(frame, label, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 3)
+#                 cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
+
+#             object_trackers = updated_trackers
+
+#             font = cv2.FONT_HERSHEY_SIMPLEX
+#             font_scale = 2.0
+#             thickness = 3
+#             text = f"Count: {count}"
+#             (text_width, text_height), baseline = cv2.getTextSize(text, font, font_scale, thickness)
+#             x = (frame_width - text_width) // 2
+#             y = 50
+#             cv2.putText(frame, text, (x, y), font, font_scale, (0, 0, 255), thickness)
+
+#             details_text = ", ".join(f"{v} {k}" for k, v in class_counts.items())
+#             cv2.putText(frame, details_text, (x, y + 40), font, 1.0, (0, 255, 0), 2)
+
+#             cv2.imshow("Live Detection with Counting", frame)
+
+#             key = cv2.waitKey(1) & 0xFF
+#             if key == ord('q'):
+#                 logger.info(f"Video processing stopped by 'q', count={count}")
+#                 break
+
+#         cap.release()
+#         cv2.destroyAllWindows()
+
+#         end_time = datetime.datetime.now()
+#         logger.info(f"Video processing ended at: {end_time}")
+#         elapsed_time = end_time - start_time
+#         logger.info(f"Total processing time: {elapsed_time}")
+#         logger.info(f"Total boxes counted crossing line: {count}")
+
+#         background_tasks.add_task(send_count_email, count, "abinayabi55@gmail.com",
+#                                   start_time, end_time, supervisor_name, vehicle_no, class_counts)
+
+#         return {
+#             "count": count,
+#             "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+#             "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+#             "processing_duration_sec": elapsed_time.total_seconds(),
+#             "model_used": selected_model,
+#             "classes_detected": classes
+#         }
+
+#     except Exception as e:
+#         logger.error(f"Error in processing video: {e}")
+#         raise HTTPException(status_code=500, detail=str(e))
+
+
+# @app.exception_handler(RequestValidationError)
+# async def validation_exception_handler(request: requests.Request, exc: RequestValidationError):
+#     return JSONResponse(
+#         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+#         content=jsonable_encoder({
+#             "detail": exc.errors(),
+#             "body": exc.body
+#         }),
+#     )
+
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+
+#----------------------------------Final working code---------------------------------------------#
+main.py
+
+
+import pathlib
+pathlib.PosixPath = pathlib.WindowsPath
+
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form, BackgroundTasks
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
+from fastapi import status
+
+import torch
+import cv2
+import os
+import tempfile
+import requests
+from torchvision import transforms
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import smtplib
+import logging
+import datetime
+import numpy as np
+from collections import deque
+
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+app = FastAPI()
+
+origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+YOLOV5_FULLPATH = "D:/Vchanel/Box_detection_web/yolov5"
+
+MODEL_PATHS = {
+    "Single Box": {
+        "weights": "D:/Vchanel/Box_detection_web/backend/best5.pt",
+        "classes": ["box"]
+    },
+    "Multiple Box": {
+        "weights": "D:/Vchanel/Box_detection_web/backend/best_demo2.pt",
+        "classes": ["box"]
+    },
+    "4_5_6 Box": {
+        "weights": "D:/Vchanel/Box_detection_web/backend/best_demo_allbox.pt",
+        "classes": ["4box", "5box", "6box"]
+    }
+}
+
+CONF_THRESHOLD = 0.5
+
+
+def smooth_box(history):
+    xs1, ys1, xs2, ys2 = zip(*history)
+    return int(np.mean(xs1)), int(np.mean(ys1)), int(np.mean(xs2)), int(np.mean(ys2))
+
+
+def get_centroid(box):
+    xmin, ymin, xmax, ymax = box
+    cx = int((xmin + xmax) / 2)
+    cy = int((ymin + ymax) / 2)
+    return cx, cy
+
+
+def is_crossing_line(prev_pos, current_pos, line_y):
+    return prev_pos < line_y and current_pos >= line_y
+
+
+def send_count_email(count: int, to_email: str, start_time: datetime.datetime, end_time: datetime.datetime,
+                     supervisor_name: str, vehicle_no: str, class_counts: dict):
+    logger.info(f"Preparing to send email for count: {count}")
+
+    sender_email = "abinayabi55@gmail.com"
+    sender_password = "vepmrbuzypehztdh"  # Your Gmail app password
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = to_email
+    message["Subject"] = "Box Count"
+
+    class_counts_str = "\n".join(f"{cls}: {cnt}" for cls, cnt in class_counts.items())
+
+    body = (f"Supervisor Name: {supervisor_name}\n"
+            f"Vehicle Number: {vehicle_no}\n\n"
+            f"Total count of Boxes : {count}\n\n"
+            f"Counts per class:\n{class_counts_str}\n\n"
+            f"Video processing started at: {start_time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+            f"Video processing ended at: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+
+    message.attach(MIMEText(body, "plain"))
+
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.set_debuglevel(1)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, to_email, message.as_string())
+        server.quit()
+        logger.info("Email sent successfully!")
+    except Exception as e:
+        logger.error(f"Error sending email: {e}")
+
+
+@app.get("/video/{filename}")
+def get_video(filename: str):
+    video_path = f"{filename}"
+    if not os.path.isfile(video_path):
+        raise HTTPException(status_code=404, detail="Video not found")
+    return FileResponse(video_path, media_type="video/mp4")
+
+
+processing_flag = False
+@app.post("/process-video")
+async def process_video(
+    file: UploadFile = File(None),
+    video_url: str = Form(None),
+    supervisor_name: str = Form(...),
+    vehicle_no: str = Form(...),
+    selected_model: str = Form(...),
+    background_tasks: BackgroundTasks = BackgroundTasks()
+):
+    global processing_flag 
+    processing_flag = True
+  
+
+    
+    if selected_model not in MODEL_PATHS:
+        raise HTTPException(status_code=400, detail=f"Unknown model: {selected_model}")
+
+    config = MODEL_PATHS[selected_model]
+    weights_path = config["weights"]
+    classes = config["classes"]
+
+    count = 0
+    object_trackers = {}
+    next_object_id = 0
+    class_counts = {}
+
+    box_history = {}
+    box_confidence = {}
+    active_objects = {}
+    object_states = {}  # 0=outside, 1=inside
+    region_width = 40
+
+    try:
+        if file:
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1])
+            content = await file.read()
+            temp_file.write(content)
+            temp_file.close()
+            video_path = temp_file.name
+        elif video_url:
+            if video_url.startswith("file://") or os.path.exists(video_url):
+                video_path = video_url.replace("file://", "")
+                if not os.path.exists(video_path):
+                    raise HTTPException(status_code=400, detail=f"Local file not found: {video_path}")
+            else:
+                tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+                response = requests.get(video_url, stream=True)
+                response.raise_for_status()
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        tmp_file.write(chunk)
+                tmp_file.close()
+                video_path = tmp_file.name
+        else:
+            raise HTTPException(status_code=400, detail="No video file or URL provided")
+
+        model = torch.hub.load(
+            YOLOV5_FULLPATH,
+            'custom',
+            path=weights_path,
+            source='local',
+            force_reload=False
+        )
+        model.eval()
+
+        cap = cv2.VideoCapture(video_path)
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        
+        line_position = frame_width // 2   # vertical line position
+
+        start_time = datetime.datetime.now()
+        logger.info(f"Video processing started at: {start_time}")
+
+        allowed_classes = [cls.lower() for cls in classes]
+
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = model(frame_rgb)
+            detections = results.pandas().xyxy[0]
+
+            # Draw vertical red line for count zone
+            cv2.line(frame, (line_position, 0), (line_position, frame_height), (0, 0, 255), 2)
+
+            region_start = line_position - region_width
+            region_end = line_position + region_width
+            overlay = frame.copy()
+            cv2.rectangle(overlay, (region_start, 0), (region_end, frame_height), (255, 0, 0), -1)
+            frame = cv2.addWeighted(overlay, 0.2, frame, 0.8, 0)
+            cv2.rectangle(overlay, (region_start, 0), (region_end, frame_height), (0, 0, 255), -1)
+            frame = cv2.addWeighted(overlay, 0.15, frame, 0.85, 0)
+
+            current_centroids = []
+
+            for _, row in detections.iterrows():
+                cname = row['name'].lower()
+                if row['confidence'] < CONF_THRESHOLD or cname not in allowed_classes:
+                    continue
+                xmin, ymin, xmax, ymax = map(int, [row['xmin'], row['ymin'], row['xmax'], row['ymax']])
+
+                if cname == "box":
+                    cx = (xmin + xmax) // 2
+                    cy = (ymin + ymax) // 2
+
+                    matched_id = None
+                    for oid, (pcx, pcy) in active_objects.items():
+                        if abs(cx - pcx) < 50 and abs(cy - pcy) < 50:
+                            matched_id = oid
+                            break
+                    if matched_id is None:
+                        matched_id = next_object_id
+                        object_id = next_object_id + 1 if 'object_id' in locals() else 1
+                        next_object_id = object_id
+
+                    active_objects[matched_id] = (cx, cy)
+
+                    if matched_id not in box_history:
+                        box_history[matched_id] = deque(maxlen=5)
+                    box_history[matched_id].append((xmin, ymin, xmax, ymax))
+                    box_confidence[matched_id] = row['confidence']
+
+                    sm_x1, sm_y1, sm_x2, sm_y2 = smooth_box(box_history[matched_id])
+                    if matched_id not in object_states:
+                        object_states[matched_id] = 0
+                    if region_start <= sm_x1 <= region_end:
+                        if object_states[matched_id] == 0:
+                            object_states[matched_id] = 1
+                    else:
+                        if object_states[matched_id] == 1:
+                            count += 1
+                            object_states[matched_id] = 0
+                            class_counts["box"] = class_counts.get("box", 0) + 1
+
+                    cv2.rectangle(frame, (sm_x1, sm_y1), (sm_x2, sm_y2), (0, 255, 0), 2)
+                    cv2.putText(
+                        frame, f"{cname} {row['confidence']:.2f}",
+                        (sm_x1, sm_y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5, (0, 255, 0), 2
+                    )
+
+                elif cname in ["4box", "5box", "6box"]:
+                    centroid = get_centroid((xmin, ymin, xmax, ymax))
+                    current_centroids.append({
+                        "centroid": centroid,
+                        "bbox": (xmin, ymin, xmax, ymax),
+                        "class_name": cname,
+                        "confidence": row['confidence']
+                    })
+
+            updated_trackers = {}
+            used_ids = set()
+            line_horizontal = frame_height // 2  # horizontal center line for 4/5/6 box counting
+
+            for obj in current_centroids:
+                cx, cy = obj["centroid"]
+                bbox = obj["bbox"]
+                class_name = obj["class_name"]
+                confidence = obj["confidence"]
+
+                assigned_id = None
+                min_dist = float('inf')
+
+                for obj_id, prev_cy in object_trackers.items():
+                    if obj_id in used_ids:
+                        continue
+                    dist = abs(prev_cy - cy)
+                    if dist < 50 and dist < min_dist:
+                        min_dist = dist
+                        assigned_id = obj_id
+
+                if assigned_id is None:
+                    assigned_id = next_object_id
+                    next_object_id += 1
+
+                if assigned_id in object_trackers:
+                    if is_crossing_line(object_trackers[assigned_id], cy, line_horizontal):
+                        increment = {"4box": 4, "5box": 5, "6box": 6}.get(class_name.lower(), 1)
+                        count += increment
+                        class_counts[class_name] = class_counts.get(class_name, 0) + 1
+
+                updated_trackers[assigned_id] = cy
+                used_ids.add(assigned_id)
+
+                xmin, ymin, xmax, ymax = bbox
+                color = (0, 255, 0)
+                label = f"{class_name} {confidence:.2f} ID:{assigned_id}"
+                cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color, 2)
+                cv2.putText(frame, label, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 3)
+                cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
+
+            object_trackers = updated_trackers
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 2.0
+            thickness = 3
+            text = f"Count: {count}"
+            (text_width, text_height), baseline = cv2.getTextSize(text, font, font_scale, thickness)
+            x = (frame_width - text_width) // 2
+            y = 50
+            cv2.putText(frame, text, (x, y), font, font_scale, (0, 0, 255), thickness)
+
+            details_text = ", ".join(f"{v} {k}" for k, v in class_counts.items())
+            cv2.putText(frame, details_text, (x, y + 40), font, 1.0, (0, 255, 0), 2)
+
+            cv2.imshow("Live Detection with Counting", frame)
+
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q') or not processing_flag:
+                logger.info(f"Video processing stopped by 'q', count={count}")
+                break
+            
+        processing_flag = False
+                
+        @app.post("/stop-processing")
+        async def stop_processing():
+            global processing_flag
+            if not processing_flag:
+                    return {"status": "Processing not running"}
+            processing_flag = False
+            return {"status": "Processing stopping"}
+                
+
+
+        cap.release()
+        cv2.destroyAllWindows()
+
+        end_time = datetime.datetime.now()
+        logger.info(f"Video processing ended at: {end_time}")
+        elapsed_time = end_time - start_time
+        logger.info(f"Total processing time: {elapsed_time}")
+        logger.info(f"Total boxes counted crossing line: {count}")
+
+        background_tasks.add_task(send_count_email, count, "abinayabi55@gmail.com",
+                                  start_time, end_time, supervisor_name, vehicle_no, class_counts)
+
+        return {
+            "count": count,
+            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "processing_duration_sec": elapsed_time.total_seconds(),
+            "model_used": selected_model,
+            "classes_detected": classes
+        }
+
+    except Exception as e:
+        logger.error(f"Error in processing video: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: requests.Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content=jsonable_encoder({
+            "detail": exc.errors(),
+            "body": exc.body
+        }),
+    )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+
+Front end 
+
+import React, { useState } from "react";
+
+function ProcessingPage() {
+  const [videoPath, setVideoPath] = useState("");
+  const [supervisor, setSupervisor] = useState("");
+  const [vehicleNumber, setVehicleNumber] = useState("");
+  const [customSupervisor, setCustomSupervisor] = useState("");
+  const [customVehicleNumber, setCustomVehicleNumber] = useState("");
+  const [selectedModel, setSelectedModel] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const supervisorOptions = ["Supervisor 1", "Supervisor 2", "Supervisor 3", "Other"];
+  const vehicleOptions = ["Vehicle A123", "Vehicle B456", "Vehicle C789", "Other"];
+  const modelOptions = ["Single Box", "Multiple Box", "4_5_6 Box"];
+
+  const finalSupervisor = supervisor === "Other" ? customSupervisor : supervisor;
+  const finalVehicleNumber = vehicleNumber === "Other" ? customVehicleNumber : vehicleNumber;
+
+  // Adjusted startProcessing to send videoPath string instead of file upload
+  const startProcessing = async () => {
+    if (!videoPath) {
+      alert("Please enter the full local video file path");
+      return;
+    }
+    if (!supervisor || !vehicleNumber || !selectedModel) {
+      alert("Please fill all fields before starting processing");
+      return;
+    }
+
+    setProcessing(true);
+    setResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("video_url", videoPath); // send as video_url string
+      formData.append("supervisor_name", finalSupervisor);
+      formData.append("vehicle_no", finalVehicleNumber);
+      formData.append("selected_model", selectedModel);
+
+      const response = await fetch("http://localhost:8000/process-video", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        alert(`Error starting processing: ${err.detail || "Unknown error"}`);
+        setProcessing(false);
+        return;
+      }
+
+      alert("Processing started");
+    } catch (error) {
+      alert("Failed to start processing: " + error.message);
+      setProcessing(false);
+    }
+  };
+
+  const stopProcessing = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/stop-processing", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        alert(`Error stopping processing: ${err.detail || "Unknown error"}`);
+        return;
+      }
+
+      alert("Processing stopped, email will be sent shortly");
+      setProcessing(false);
+    } catch (error) {
+      alert("Failed to stop processing: " + error.message);
+    }
+  };
+
+  return (
+    <div style={styles.container}>
+      <h2 style={styles.title}> 🎥 Video Detection with Bounding Boxes</h2>
+
+      {/* Replaced file input with text input for video file path */}
+      <input
+        type="text"
+        placeholder="Paste full local video file path here"
+        value={videoPath}
+        onChange={(e) => setVideoPath(e.target.value)}
+        style={styles.input}
+      />
+
+      <label style={styles.label}>Supervisor</label>
+      <select
+        style={styles.select}
+        value={supervisor}
+        onChange={(e) => setSupervisor(e.target.value)}
+        required
+      >
+        <option value="" disabled>
+          Select supervisor
+        </option>
+        {supervisorOptions.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+      {supervisor === "Other" && (
+        <input
+          type="text"
+          placeholder="Enter supervisor name"
+          value={customSupervisor}
+          onChange={(e) => setCustomSupervisor(e.target.value)}
+          required
+          style={styles.input}
+        />
+      )}
+
+      <label style={styles.label}>Vehicle Number</label>
+      <select
+        style={styles.select}
+        value={vehicleNumber}
+        onChange={(e) => setVehicleNumber(e.target.value)}
+        required
+      >
+        <option value="" disabled>
+          Select vehicle number
+        </option>
+        {vehicleOptions.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+      {vehicleNumber === "Other" && (
+        <input
+          type="text"
+          placeholder="Enter vehicle number"
+          value={customVehicleNumber}
+          onChange={(e) => setCustomVehicleNumber(e.target.value)}
+          required
+          style={styles.input}
+        />
+      )}
+
+      <label style={styles.label}>Select Model</label>
+      <select
+        style={styles.select}
+        value={selectedModel}
+        onChange={(e) => setSelectedModel(e.target.value)}
+        required
+      >
+        <option value="" disabled>
+          Select model
+        </option>
+        {modelOptions.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+
+      <button onClick={startProcessing} style={{ ...styles.button, marginTop: 10, backgroundColor: "#28a745", marginRight: 10 }}>
+        Start
+      </button>
+      <button onClick={stopProcessing} style={{ ...styles.button, marginTop: 10, backgroundColor: "#dc3545" }}>
+        Stop
+      </button>
+
+      {result && (
+        <div style={{ marginTop: 20 }}>
+          <h3>Result</h3>
+          <p>Total Count: {result.count}</p>
+          <p>Start Time: {result.start_time}</p>
+          <p>End Time: {result.end_time}</p>
+          <p>Processing Duration (sec): {result.processing_duration_sec}</p>
+          <p>Model Used: {result.model_used}</p>
+          <p>Classes Detected: {result.classes_detected.join(", ")}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    maxWidth: 600,
+    margin: "40px auto",
+    padding: 50,
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    backgroundColor: "#f0f8ff",
+    borderRadius: 20,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+  },
+  title: {
+    color: "#007acc",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  input: {
+    width: "100%",
+    padding: "12px 15px",
+    fontSize: 16,
+    marginBottom: 36,
+    borderRadius: 6,
+    border: "1px solid #007acc",
+    outline: "none",
+  },
+  label: {
+    fontWeight: "bold",
+    color: "#007acc",
+    marginBottom: 6,
+    display: "block",
+    textAlign: "left",
+  },
+  select: {
+    width: "100%",
+    padding: "12px 15px",
+    fontSize: 16,
+    marginBottom: 16,
+    borderRadius: 6,
+    border: "1px solid #007acc",
+    outline: "none",
+    backgroundColor: "white",
+  },
+  button: {
+    padding: 14,
+    fontSize: 18,
+    color: "white",
+    border: "none",
+    borderRadius: 10,
+    fontWeight: "bold",
+    cursor: "pointer",
+    transition: "background-color 0.3s ease",
+  },
+};
+
+export default ProcessingPage;
+-----------------------------------------------------------
+
+
+import pathlib
+pathlib.PosixPath = pathlib.WindowsPath
+
+
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form, BackgroundTasks
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
+from fastapi import status
+
+import threading
+import torch
+import cv2
+import os
+import tempfile
+import requests
+from torchvision import transforms
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import smtplib
+import logging
+import datetime
+import numpy as np
+from collections import deque
+
+from dotenv import load_dotenv
+import os
+
+# Load environment variables
+load_dotenv()# from dotenv import load_dotenv
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+
+app = FastAPI()
+
+
+origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+]
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+YOLOV5_FULLPATH = "D:/Vchanel/Box_detection_web/yolov5"
+
+
+MODEL_PATHS = {
+    "Single Box": {
+        "weights": "D:/Vchanel/Box_detection_web/backend/best5.pt",
+        "classes": ["box"]
+    },
+    "Multiple Box": {
+        "weights": "D:/Vchanel/Box_detection_web/backend/best_demo2.pt",
+        "classes": ["box"]
+    },
+    "4_5_6 Box": {
+        "weights": "D:/Vchanel/Box_detection_web/backend/best_demo_allbox.pt",
+        "classes": ["4box", "5box", "6box"]
+    }
+}
+
+
+CONF_THRESHOLD = 0.5
+
+
+
+def smooth_box(history):
+    xs1, ys1, xs2, ys2 = zip(*history)
+    return int(np.mean(xs1)), int(np.mean(ys1)), int(np.mean(xs2)), int(np.mean(ys2))
+
+
+
+def get_centroid(box):
+    xmin, ymin, xmax, ymax = box
+    cx = int((xmin + xmax) / 2)
+    cy = int((ymin + ymax) / 2)
+    return cx, cy
+
+
+
+def is_crossing_line(prev_pos, current_pos, line_y):
+    return prev_pos < line_y and current_pos >= line_y
+
+
+
+def send_count_email(count: int, to_email: str, start_time: datetime.datetime, end_time: datetime.datetime,
+                     supervisor_name: str, vehicle_no: str, class_counts: dict):
+    logger.info(f"Preparing to send email for count: {count}")
+
+
+    sender_email = os.getenv("EMAIL_ADDRESS")  # Your Gmail address
+    sender_password = os.getenv("EMAIL_PASSWORD")  # Your Gmail app password
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+
+
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = to_email
+    message["Subject"] = "Box Count"
+
+
+    class_counts_str = "\n".join(f"{cls}: {cnt}" for cls, cnt in class_counts.items())
+
+
+    body = (f"Supervisor Name: {supervisor_name}\n"
+            f"Vehicle Number: {vehicle_no}\n\n"
+            f"Total count of Boxes : {count}\n\n"
+            f"Counts per class:\n{class_counts_str}\n\n"
+            f"Video processing started at: {start_time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+            f"Video processing ended at: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+
+
+    message.attach(MIMEText(body, "plain"))
+
+
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.set_debuglevel(1)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, to_email, message.as_string())
+        server.quit()
+        logger.info("Email sent successfully!")
+    except Exception as e:
+        logger.error(f"Error sending email: {e}")
+
+
+
+@app.get("/video/{filename}")
+def get_video(filename: str):
+    video_path = f"{filename}"
+    if not os.path.isfile(video_path):
+        raise HTTPException(status_code=404, detail="Video not found")
+    return FileResponse(video_path, media_type="video/mp4")
+
+
+
+processing_flag = False
+processing_thread = None
+processing_result = {}
+
+def run_video_processing(file, video_url, supervisor_name, vehicle_no, selected_model, background_tasks):
+    global processing_flag, processing_result
+
+    if selected_model not in MODEL_PATHS:
+        logger.error(f"Unknown model: {selected_model}")
+        processing_flag = False
+        return
+
+    config = MODEL_PATHS[selected_model]
+    weights_path = config["weights"]
+    classes = config["classes"]
+
+    count = 0
+    object_trackers = {}
+    next_object_id = 0
+    class_counts = {}
+
+    box_history = {}
+    box_confidence = {}
+    active_objects = {}
+    object_states = {}  # 0=outside, 1=inside
+    region_width = 40
+
+    try:
+        if video_url:
+            if video_url.startswith("file://") or os.path.exists(video_url):
+                video_path = video_url.replace("file://", "")
+                if not os.path.exists(video_path):
+                    logger.error(f"Local file not found: {video_path}")
+                    processing_flag = False
+                    return
+            else:
+                tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+                response = requests.get(video_url, stream=True)
+                response.raise_for_status()
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        tmp_file.write(chunk)
+                tmp_file.close()
+                video_path = tmp_file.name
+        else:
+            logger.error("No video file or URL provided")
+            processing_flag = False
+            return
+
+
+        model = torch.hub.load(
+            YOLOV5_FULLPATH,
+            'custom',
+            path=weights_path,
+            source='local',
+            force_reload=False
+        )
+        model.eval()
+
+
+        cap = cv2.VideoCapture(video_path)
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        
+        line_position = frame_width // 2   # vertical line position
+
+
+        start_time = datetime.datetime.now()
+        logger.info(f"Video processing started at: {start_time}")
+
+
+        allowed_classes = [cls.lower() for cls in classes]
+
+
+        while True:
+            ret, frame = cap.read()
+            if not ret or not processing_flag:
+                break
+
+
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = model(frame_rgb)
+            detections = results.pandas().xyxy[0]
+
+
+            # Draw vertical red line for count zone
+            cv2.line(frame, (line_position, 0), (line_position, frame_height), (0, 0, 255), 2)
+
+
+            region_start = line_position - region_width
+            region_end = line_position + region_width
+            overlay = frame.copy()
+            cv2.rectangle(overlay, (region_start, 0), (region_end, frame_height), (255, 0, 0), -1)
+            frame = cv2.addWeighted(overlay, 0.2, frame, 0.8, 0)
+            cv2.rectangle(overlay, (region_start, 0), (region_end, frame_height), (0, 0, 255), -1)
+            frame = cv2.addWeighted(overlay, 0.15, frame, 0.85, 0)
+
+
+            current_centroids = []
+
+
+            for _, row in detections.iterrows():
+                cname = row['name'].lower()
+                if row['confidence'] < CONF_THRESHOLD or cname not in allowed_classes:
+                    continue
+                xmin, ymin, xmax, ymax = map(int, [row['xmin'], row['ymin'], row['xmax'], row['ymax']])
+
+
+                if cname == "box":
+                    cx = (xmin + xmax) // 2
+                    cy = (ymin + ymax) // 2
+
+
+                    matched_id = None
+                    for oid, (pcx, pcy) in active_objects.items():
+                        if abs(cx - pcx) < 50 and abs(cy - pcy) < 50:
+                            matched_id = oid
+                            break
+                    if matched_id is None:
+                        matched_id = next_object_id
+                        object_id = next_object_id + 1 if 'object_id' in locals() else 1
+                        next_object_id = object_id
+
+
+                    active_objects[matched_id] = (cx, cy)
+
+
+                    if matched_id not in box_history:
+                        box_history[matched_id] = deque(maxlen=5)
+                    box_history[matched_id].append((xmin, ymin, xmax, ymax))
+                    box_confidence[matched_id] = row['confidence']
+
+
+                    sm_x1, sm_y1, sm_x2, sm_y2 = smooth_box(box_history[matched_id])
+                    if matched_id not in object_states:
+                        object_states[matched_id] = 0
+                    if region_start <= sm_x1 <= region_end:
+                        if object_states[matched_id] == 0:
+                            object_states[matched_id] = 1
+                    else:
+                        if object_states[matched_id] == 1:
+                            count += 1
+                            object_states[matched_id] = 0
+                            class_counts["box"] = class_counts.get("box", 0) + 1
+
+
+                    cv2.rectangle(frame, (sm_x1, sm_y1), (sm_x2, sm_y2), (0, 255, 0), 2)
+                    cv2.putText(
+                        frame, f"{cname} {row['confidence']:.2f}",
+                        (sm_x1, sm_y1 - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5, (0, 255, 0), 2
+                    )
+
+
+                elif cname in ["4box", "5box", "6box"]:
+                    centroid = get_centroid((xmin, ymin, xmax, ymax))
+                    current_centroids.append({
+                        "centroid": centroid,
+                        "bbox": (xmin, ymin, xmax, ymax),
+                        "class_name": cname,
+                        "confidence": row['confidence']
+                    })
+
+
+            updated_trackers = {}
+            used_ids = set()
+            line_horizontal = frame_height // 2  # horizontal center line for 4/5/6 box counting
+
+
+            for obj in current_centroids:
+                cx, cy = obj["centroid"]
+                bbox = obj["bbox"]
+                class_name = obj["class_name"]
+                confidence = obj["confidence"]
+
+
+                assigned_id = None
+                min_dist = float('inf')
+
+
+                for obj_id, prev_cy in object_trackers.items():
+                    if obj_id in used_ids:
+                        continue
+                    dist = abs(prev_cy - cy)
+                    if dist < 50 and dist < min_dist:
+                        min_dist = dist
+                        assigned_id = obj_id
+
+
+                if assigned_id is None:
+                    assigned_id = next_object_id
+                    next_object_id += 1
+
+
+                if assigned_id in object_trackers:
+                    if is_crossing_line(object_trackers[assigned_id], cy, line_horizontal):
+                        increment = {"4box": 4, "5box": 5, "6box": 6}.get(class_name.lower(), 1)
+                        count += increment
+                        class_counts[class_name] = class_counts.get(class_name, 0) + 1
+
+
+                updated_trackers[assigned_id] = cy
+                used_ids.add(assigned_id)
+
+
+                xmin, ymin, xmax, ymax = bbox
+                color = (0, 255, 0)
+                label = f"{class_name} {confidence:.2f} ID:{assigned_id}"
+                cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), color, 2)
+                cv2.putText(frame, label, (xmin, ymin - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 3)
+                cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
+
+
+            object_trackers = updated_trackers
+
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 2.0
+            thickness = 3
+            text = f"Count: {count}"
+            (text_width, text_height), baseline = cv2.getTextSize(text, font, font_scale, thickness)
+            x = (frame_width - text_width) // 2
+            y = 50
+            cv2.putText(frame, text, (x, y), font, font_scale, (0, 0, 255), thickness)
+
+
+            details_text = ", ".join(f"{v} {k}" for k, v in class_counts.items())
+            cv2.putText(frame, details_text, (x, y + 40), font, 1.0, (0, 255, 0), 2)
+
+
+            cv2.imshow("Live Detection with Counting", frame)
+
+
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q') or not processing_flag:
+                logger.info(f"Video processing stopped by 'q' or stop flag, count={count}")
+                break
+        
+        cap.release()
+        cv2.destroyAllWindows()
+
+
+        end_time = datetime.datetime.now()
+        logger.info(f"Video processing ended at: {end_time}")
+        elapsed_time = end_time - start_time
+        logger.info(f"Total processing time: {elapsed_time}")
+        logger.info(f"Total boxes counted crossing line: {count}")
+
+        processing_result = {
+            "count": count,
+            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "processing_duration_sec": elapsed_time.total_seconds(),
+            "model_used": selected_model,
+            "classes_detected": classes
+        }
+
+        send_count_email(count, "abinayabi55@gmail.com", start_time, end_time, supervisor_name, vehicle_no, class_counts)
+
+    except Exception as e:
+        logger.error(f"Error in processing video: {e}")
+        processing_flag = False
+
+
+# @app.post("/process-video")
+# async def process_video(
+#     file: UploadFile = File(None),
+#     video_url: str = Form(None),
+#     supervisor_name: str = Form(...),
+#     vehicle_no: str = Form(...),
+#     selected_model: str = Form(...),
+#     background_tasks: BackgroundTasks = BackgroundTasks()
+# ):
+#     global processing_flag, processing_thread, processing_result
+#     if processing_flag:
+#         raise HTTPException(status_code=400, detail="Processing already running")
+
+#     processing_flag = True
+#     processing_result = {}
+#     processing_thread = threading.Thread(target=run_video_processing, args=(file, video_url, supervisor_name, vehicle_no, selected_model, background_tasks))
+#     processing_thread.start()
+
+#     return {"status": "Processing started"}
+
+
+# @app.post("/stop-processing")
+# async def stop_processing():
+#     global processing_flag
+#     if not processing_flag:
+#         return {"status": "Processing not running"}
+#     processing_flag = False
+#     logger.info("Processing flag set to False")
+#     return {"status": "Processing stopping"}
+
+
+# @app.exception_handler(RequestValidationError)
+# async def validation_exception_handler(request, exc: RequestValidationError):
+#     return JSONResponse(
+#         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+#         content=jsonable_encoder({
+#             "detail": exc.errors(),
+#             "body": exc.body
+#         }),
+#     )
+
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+
+# import pathlib
+# pathlib.PosixPath = pathlib.WindowsPath
+
+# from fastapi import FastAPI, HTTPException, File, UploadFile, Form, BackgroundTasks
+# from fastapi.responses import FileResponse, JSONResponse
+# from fastapi.middleware.cors import CORSMiddleware
+# from fastapi.exceptions import RequestValidationError
+# from fastapi.encoders import jsonable_encoder
+# from fastapi import status
+
+# import threading
+# import torch
+# import cv2
+# import os
+# import tempfile
+# import requests
+# from torchvision import transforms
+# from email.mime.text import MIMEText
+# from email.mime.multipart import MIMEMultipart
+# import smtplib
+# import logging
+# import datetime
+# import numpy as np
+# from collections import deque
+
+# from dotenv import load_dotenv
+# import os
+
+# # Load environment variables
+# load_dotenv()
+
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s - %(levelname)s - %(message)s"
+# )
+# logger = logging.getLogger(__name__)
+
+# app = FastAPI()
+
+# origins = [
+#     "http://localhost:3000",
+#     "http://localhost:3001",
+# ]
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+
+# YOLOV5_FULLPATH = "D:/Vchanel/Box_detection_web/yolov5"
+
+# MODEL_PATHS = {
+#     "Single Box": {
+#         "weights": "D:/Vchanel/Box_detection_web/backend/best5.pt",
+#         "classes": ["box"]
+#     },
+#     "Multiple Box": {
+#         "weights": "D:/Vchanel/Box_detection_web/backend/best_demo2.pt",
+#         "classes": ["box"]
+#     },
+#     "4_5_6 Box": {
+#         "weights": "D:/Vchanel/Box_detection_web/backend/best_demo_allbox.pt",
+#         "classes": ["4box", "5box", "6box"]
+#     }
+# }
+
+# CONF_THRESHOLD = 0.5
+
+# def smooth_box(history):
+#     xs1, ys1, xs2, ys2 = zip(*history)
+#     return int(np.mean(xs1)), int(np.mean(ys1)), int(np.mean(xs2)), int(np.mean(ys2))
+
+# def get_centroid(box):
+#     xmin, ymin, xmax, ymax = box
+#     cx = int((xmin + xmax) / 2)
+#     cy = int((ymin + ymax) / 2)
+#     return cx, cy
+
+# def is_crossing_line(prev_pos, current_pos, line_y):
+#     return prev_pos < line_y and current_pos >= line_y
+
+# def send_count_email(count: int, to_email: str, start_time: datetime.datetime, end_time: datetime.datetime,
+#                      supervisor_name: str, vehicle_no: str, class_counts: dict):
+#     logger.info(f"Preparing to send email for count: {count}")
+
+#     sender_email = os.getenv("EMAIL_ADDRESS")
+#     sender_password = os.getenv("EMAIL_PASSWORD")
+#     smtp_server = "smtp.gmail.com"
+#     smtp_port = 587
+
+#     message = MIMEMultipart()
+#     message["From"] = sender_email
+#     message["To"] = to_email
+#     message["Subject"] = "Box Count"
+
+#     class_counts_str = "\n".join(f"{cls}: {cnt}" for cls, cnt in class_counts.items())
+
+#     body = (f"Supervisor Name: {supervisor_name}\n"
+#             f"Vehicle Number: {vehicle_no}\n\n"
+#             f"Total count of Boxes : {count}\n\n"
+#             f"Counts per class:\n{class_counts_str}\n\n"
+#             f"Video processing started at: {start_time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+#             f"Video processing ended at: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+
+#     message.attach(MIMEText(body, "plain"))
+
+#     try:
+#         server = smtplib.SMTP(smtp_server, smtp_port)
+#         server.set_debuglevel(1)
+#         server.starttls()
+#         server.login(sender_email, sender_password)
+#         server.sendmail(sender_email, to_email, message.as_string())
+#         server.quit()
+#         logger.info("Email sent successfully!")
+#     except Exception as e:
+#         logger.error(f"Error sending email: {e}")
+
+# @app.get("/video/{filename}")
+# def get_video(filename: str):
+#     video_path = f"{filename}"
+#     if not os.path.isfile(video_path):
+#         raise HTTPException(status_code=404, detail="Video not found")
+#     return FileResponse(video_path, media_type="video/mp4")
+
+# processing_flag = False
+# processing_thread = None
+# processing_result = {}
+
+# def run_video_processing(file, video_url, supervisor_name, vehicle_no, selected_model, background_tasks):
+#     global processing_flag, processing_result
+
+#     if selected_model not in MODEL_PATHS:
+#         logger.error(f"Unknown model: {selected_model}")
+#         processing_flag = False
+#         return
+
+#     config = MODEL_PATHS[selected_model]
+#     weights_path = config["weights"]
+#     classes = config["classes"]
+
+#     count = 0
+#     object_trackers = {}
+#     next_object_id = 0
+#     class_counts = {}
+
+#     box_history = {}
+#     box_confidence = {}
+#     active_objects = {}
+#     object_states = {}  # 0=outside, 1=inside
+#     region_width = 40
+
+#     try:
+#         if video_url:
+#             if video_url.startswith("file://") or os.path.exists(video_url):
+#                 video_path = video_url.replace("file://", "")
+#                 if not os.path.exists(video_path):
+#                     logger.error(f"Local file not found: {video_path}")
+#                     processing_flag = False
+#                     return
+#             else:
+#                 tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
+#                 response = requests.get(video_url, stream=True)
+#                 response.raise_for_status()
+#                 for chunk in response.iter_content(chunk_size=8192):
+#                     if chunk:
+#                         tmp_file.write(chunk)
+#                 tmp_file.close()
+#                 video_path = tmp_file.name
+#         else:
+#             logger.error("No video file or URL provided")
+#             processing_flag = False
+#             return
+
+#         model = torch.hub.load(
+#             YOLOV5_FULLPATH,
+#             'custom',
+#             path=weights_path,
+#             source='local',
+#             force_reload=False
+#         )
+#         model.eval()
+
+#         cap = cv2.VideoCapture(video_path)
+#         fps = cap.get(cv2.CAP_PROP_FPS)
+#         frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+#         frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        
+#         line_position = frame_width // 2   # vertical line
+
+#         start_time = datetime.datetime.now()
+#         logger.info(f"Video processing started at: {start_time}")
+
+#         allowed_classes = [cls.lower() for cls in classes]
+
+#         while True:
+#             ret, frame = cap.read()
+#             if not ret or not processing_flag:
+#                 break
+
+#             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#             results = model(frame_rgb)
+#             detections = results.pandas().xyxy[0]
+
+#             # draw line
+#             cv2.line(frame, (line_position, 0), (line_position, frame_height), (0, 0, 255), 2)
+
+#             # Counting & detection logic here...
+#             # ------------------------------
+
+#             cv2.imshow("Live Detection with Counting", frame)
+#             key = cv2.waitKey(1) & 0xFF
+#             if key == ord('q') or not processing_flag:
+#                 logger.info(f"Video processing stopped by 'q' or stop flag, count={count}")
+#                 break
+
+#         cap.release()
+#         cv2.destroyAllWindows()
+
+#         # ✅ FIXED: This part moved inside after processing ends
+#         end_time = datetime.datetime.now()
+#         logger.info(f"Video processing ended at: {end_time}")
+#         elapsed_time = end_time - start_time
+#         logger.info(f"Total processing time: {elapsed_time}")
+#         logger.info(f"Total boxes counted crossing line: {count}")
+
+#         processing_result = {
+#             "count": count,
+#             "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+#             "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+#             "processing_duration_sec": elapsed_time.total_seconds(),
+#             "model_used": selected_model,
+#             "classes_detected": list(class_counts.keys()) if class_counts else []
+#         }
+#         processing_flag = False 
+
+#         send_count_email(count, "abinayabi55@gmail.com", start_time, end_time, supervisor_name, vehicle_no, class_counts)
+
+#     except Exception as e:
+#         logger.error(f"Error in processing video: {e}")
+#         processing_flag = False
+
+@app.post("/process-video")
+async def process_video(
+        file: UploadFile = File(None),
+        video_url: str = Form(None),
+        supervisor_name: str = Form(...),
+        vehicle_no: str = Form(...),
+        selected_model: str = Form(...),
+        background_tasks: BackgroundTasks = BackgroundTasks()
+):
+    global processing_flag, processing_thread, processing_result
+    if processing_flag:
+        raise HTTPException(status_code=400, detail="Processing already running")
+
+    processing_flag = True
+    processing_result = {}
+
+    processing_thread = threading.Thread(target=run_video_processing,
+                                         args=(file, video_url, supervisor_name, vehicle_no, selected_model, background_tasks))
+    processing_thread.start()
+
+    return {"status": "Processing started"}
+
+@app.get("/processing-result")
+async def processing_result_api():
+    global processing_flag, processing_result
+    if processing_flag:
+        return JSONResponse({"status": "processing", "result": processing_result})
+    else:
+        return JSONResponse({"status": "done", "result": processing_result})
+
+@app.post("/stop-processing")
+async def stop_processing():
+    global processing_flag
+    if not processing_flag:
+        return {"status": "Processing not running"}
+    processing_flag = False
+    return {"status": "Processing stopping"}
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content=jsonable_encoder({
+            "detail": exc.errors(),
+            "body": exc.body
+        }),
+    )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+====================================================================
+
+import React, { useState, useEffect, useRef } from "react";
+
+function ProcessingPage() {
+  const [videoPath, setVideoPath] = useState("");
+  const [supervisor, setSupervisor] = useState("");
+  const [vehicleNumber, setVehicleNumber] = useState("");
+  const [customSupervisor, setCustomSupervisor] = useState("");
+  const [customVehicleNumber, setCustomVehicleNumber] = useState("");
+  const [selectedModel, setSelectedModel] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const pollingIntervalRef = useRef(null);
+
+  const supervisorOptions = ["Supervisor 1", "Supervisor 2", "Supervisor 3", "Other"];
+  const vehicleOptions = ["Vehicle A123", "Vehicle B456", "Vehicle C789", "Other"];
+  const modelOptions = ["Single Box", "Multiple Box", "4_5_6 Box"];
+
+  const finalSupervisor = supervisor === "Other" ? customSupervisor : supervisor;
+  const finalVehicleNumber = vehicleNumber === "Other" ? customVehicleNumber : vehicleNumber;
+
+  const startProcessing = async () => {
+    if (!videoPath) {
+      alert("Please enter the full local video file path");
+      return;
+    }
+    if (!supervisor || !vehicleNumber || !selectedModel) {
+      alert("Please fill all fields before starting processing");
+      return;
+    }
+
+    setProcessing(true);
+    setResult(null);
+
+    const formData = new FormData();
+    formData.append("video_url", videoPath);
+    formData.append("supervisor_name", finalSupervisor);
+    formData.append("vehicle_no", finalVehicleNumber);
+    formData.append("selected_model", selectedModel);
+
+    try {
+      const response = await fetch("http://localhost:8000/process-video", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        alert(`Error starting processing: ${err.detail || "Unknown error"}`);
+        setProcessing(false);
+        return;
+      }
+
+      startPolling();
+    } catch (error) {
+      alert("Failed to start processing: " + error.message);
+      setProcessing(false);
+    }
+  };
+
+  const startPolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+    pollingIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await fetch("http://localhost:8000/processing-result");
+        const data = await res.json();
+        if (data.result) {
+          setResult(data.result);
+        }
+        if (data.status === "done") {
+          setProcessing(false);
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+      } catch (error) {
+        console.error("Error polling processing result:", error);
+      }
+    }, 2000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const stopProcessing = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/stop-processing", {
+        method: "POST",
+      });
+      if (!response.ok) {
+        return;
+      }
+      setProcessing(false);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    } catch (error) {
+      // optionally handle error
+    }
+  };
+
+  return (
+    <div style={styles.container}>
+      <h2 style={styles.title}> 🎥 Video Detection with Bounding Boxes</h2>
+
+      <input
+        type="text"
+        placeholder="Paste full local video file path here"
+        value={videoPath}
+        onChange={(e) => setVideoPath(e.target.value)}
+        style={styles.input}
+      />
+
+      <label style={styles.label}>Supervisor</label>
+      <select style={styles.select} value={supervisor} onChange={(e) => setSupervisor(e.target.value)} required>
+        <option value="" disabled>
+          Select supervisor
+        </option>
+        {supervisorOptions.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+      {supervisor === "Other" && (
+        <input
+          type="text"
+          placeholder="Enter supervisor name"
+          value={customSupervisor}
+          onChange={(e) => setCustomSupervisor(e.target.value)}
+          required
+          style={styles.input}
+        />
+      )}
+
+      <label style={styles.label}>Vehicle Number</label>
+      <select style={styles.select} value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} required>
+        <option value="" disabled>
+          Select vehicle number
+        </option>
+        {vehicleOptions.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+      {vehicleNumber === "Other" && (
+        <input
+          type="text"
+          placeholder="Enter vehicle number"
+          value={customVehicleNumber}
+          onChange={(e) => setCustomVehicleNumber(e.target.value)}
+          required
+          style={styles.input}
+        />
+      )}
+
+      <label style={styles.label}>Select Model</label>
+      <select style={styles.select} value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} required>
+        <option value="" disabled>
+          Select model
+        </option>
+        {modelOptions.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+
+      <button
+        onClick={startProcessing}
+        disabled={processing}
+        style={{ ...styles.button, marginTop: 10, backgroundColor: "#28a745", marginRight: 10 }}
+      >
+        Start
+      </button>
+      <button onClick={stopProcessing} disabled={!processing} style={{ ...styles.button, marginTop: 10, backgroundColor: "#dc3545" }}>
+        Stop
+      </button>
+
+      {result && 
+          (result.count || result.start_time || result.end_time || (result.classes_detected && result.classes_detected.length > 0))
+      && (
+        <div style={{ marginTop: 20 }}>
+          <h3>Result</h3>
+          <p>Total Count: {result.count}</p>
+          <p>Start Time: {result.start_time}</p>
+          <p>End Time: {result.end_time}</p>
+          <p>Processing Duration (sec): {result.processing_duration_sec}</p>
+          <p>Model Used: {result.model_used}</p>
+          <p>Classes Detected: {result?.classes_detected?.join(", ") || "None"}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    maxWidth: 600,
+    margin: "40px auto",
+    padding: 50,
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    backgroundColor: "#f0f8ff",
+    borderRadius: 20,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+  },
+  title: {
+    color: "#007acc",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  input: {
+    width: "100%",
+    padding: "12px 15px",
+    fontSize: 16,
+    marginBottom: 36,
+    borderRadius: 6,
+    border: "1px solid #007acc",
+    outline: "none",
+  },
+  label: {
+    fontWeight: "bold",
+    color: "#007acc",
+    marginBottom: 6,
+    display: "block",
+    textAlign: "left",
+  },
+  select: {
+    width: "100%",
+    padding: "12px 15px",
+    fontSize: 16,
+    marginBottom: 16,
+    borderRadius: 6,
+    border: "1px solid #007acc",
+    outline: "none",
+    backgroundColor: "white",
+  },
+  button: {
+    padding: 14,
+    fontSize: 18,
+    color: "white",
+    border: "none",
+    borderRadius: 10,
+    fontWeight: "bold",
+    cursor: "pointer",
+    transition: "background-color 0.3s ease",
+  },
+};
+
+export default ProcessingPage;
+------------------------------------------------------------------------------------
+
+
+import React, { useState, useEffect, useRef } from "react";
+
+function ProcessingPage() {
+  const [videoPath, setVideoPath] = useState("");
+  const [supervisor, setSupervisor] = useState("");
+  const [vehicleNumber, setVehicleNumber] = useState("");
+  const [customSupervisor, setCustomSupervisor] = useState("");
+  const [customVehicleNumber, setCustomVehicleNumber] = useState("");
+  const [selectedModel, setSelectedModel] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const [startHover, setStartHover] = useState(false);
+  const [stopHover, setStopHover] = useState(false);
+
+  const pollingIntervalRef = useRef(null);
+
+  const supervisorOptions = ["Supervisor 1", "Supervisor 2", "Supervisor 3", "Other"];
+  const vehicleOptions = ["Vehicle A123", "Vehicle B456", "Vehicle C789", "Other"];
+  const modelOptions = ["Single Box", "Multiple Box", "4_5_6 Box"];
+
+  const finalSupervisor = supervisor === "Other" ? customSupervisor : supervisor;
+  const finalVehicleNumber = vehicleNumber === "Other" ? customVehicleNumber : vehicleNumber;
+
+  const startProcessing = async () => {
+    if (!videoPath) {
+      alert("Please enter the full local video file path");
+      return;
+    }
+    if (!supervisor || !vehicleNumber || !selectedModel) {
+      alert("Please fill all fields before starting processing");
+      return;
+    }
+
+    setProcessing(true);
+    setResult(null);
+
+    const formData = new FormData();
+    formData.append("video_url", videoPath);
+    formData.append("supervisor_name", finalSupervisor);
+    formData.append("vehicle_no", finalVehicleNumber);
+    formData.append("selected_model", selectedModel);
+
+    try {
+      const response = await fetch("http://localhost:8000/process-video", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        alert(`Error starting processing: ${err.detail || "Unknown error"}`);
+        setProcessing(false);
+        return;
+      }
+
+      startPolling();
+    } catch (error) {
+      alert("Failed to start processing: " + error.message);
+      setProcessing(false);
+    }
+  };
+
+  const startPolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+    pollingIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await fetch("http://localhost:8000/processing-result");
+        const data = await res.json();
+        if (data.result) {
+          setResult(data.result);
+        }
+        if (data.status === "done") {
+          setProcessing(false);
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+      } catch (error) {
+        console.error("Error polling processing result:", error);
+      }
+    }, 2000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const stopProcessing = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/stop-processing", {
+        method: "POST",
+      });
+      if (!response.ok) {
+        return;
+      }
+      setProcessing(false);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    } catch (error) {
+      // optionally handle error
+    }
+  };
+
+  return (
+    <>
+      <div style={styles.pageBackground}></div>
+      <div style={styles.overlay}></div>
+      <div style={styles.pageWrapper}></div>
+      <div style={styles.container}>
+        <h2 style={styles.title}> 🎥 Video Detection with Bounding Boxes</h2>
+
+        <input
+          type="text"
+          placeholder="Paste full local video file path here"
+          value={videoPath}
+          onChange={(e) => setVideoPath(e.target.value)}
+          style={styles.input}
+        />
+
+        <label style={styles.label}>Supervisor</label>
+        <select
+          style={styles.select}
+          value={supervisor}
+          onChange={(e) => setSupervisor(e.target.value)}
+          required
+        >
+          <option value="" disabled>
+            Select supervisor
+          </option>
+          {supervisorOptions.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+        {supervisor === "Other" && (
+          <input
+            type="text"
+            placeholder="Enter supervisor name"
+            value={customSupervisor}
+            onChange={(e) => setCustomSupervisor(e.target.value)}
+            required
+            style={styles.input}
+          />
+        )}
+
+        <label style={styles.label}>Vehicle Number</label>
+        <select
+          style={styles.select}
+          value={vehicleNumber}
+          onChange={(e) => setVehicleNumber(e.target.value)}
+          required
+        >
+          <option value="" disabled>
+            Select vehicle number
+          </option>
+          {vehicleOptions.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+        {vehicleNumber === "Other" && (
+          <input
+            type="text"
+            placeholder="Enter vehicle number"
+            value={customVehicleNumber}
+            onChange={(e) => setCustomVehicleNumber(e.target.value)}
+            required
+            style={styles.input}
+          />
+        )}
+
+        <label style={styles.label}>Select Model</label>
+        <select
+          style={styles.select}
+          value={selectedModel}
+          onChange={(e) => setSelectedModel(e.target.value)}
+          required
+        >
+          <option value="" disabled>
+            Select model
+          </option>
+          {modelOptions.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+
+        <button
+          onClick={startProcessing}
+          disabled={processing}
+          style={{
+            ...styles.button,
+            ...(startHover ? styles.buttonHover : {}),
+          }}
+          onMouseEnter={() => setStartHover(true)}
+          onMouseLeave={() => setStartHover(false)}
+        >
+          Start
+        </button>
+        <button
+          onClick={stopProcessing}
+          disabled={!processing}
+          style={{
+            ...styles.button,
+            ...styles.stopButton,
+            ...(stopHover ? styles.stopButtonHover : {}),
+          }}
+          onMouseEnter={() => setStopHover(true)}
+          onMouseLeave={() => setStopHover(false)}
+        >
+          Stop
+        </button>
+
+        {result &&
+          (result.count ||
+            result.start_time ||
+            result.end_time ||
+            (result.classes_detected && result.classes_detected.length > 0)) && (
+            <div style={{ marginTop: 20 }}>
+              <h3>Result</h3>
+              <p>Total Count: {result.count}</p>
+              <p>Start Time: {result.start_time}</p>
+              <p>End Time: {result.end_time}</p>
+              <p>Processing Duration (sec): {result.processing_duration_sec}</p>
+              <p>Model Used: {result.model_used}</p>
+              <p>Classes Detected: {result?.classes_detected?.join(", ") || "None"}</p>
+            </div>
+          )}
+      </div>
+    </>
+  );
+}
+
+const styles = {
+  pageBackground: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundImage: "url('/image.png')",
+    backgroundSize: "contain",
+    backgroundPosition: "center",
+
+    zIndex: -2,
+  },
+  
+  overlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(16, 16, 16, 0.7)",
+    zIndex: -1,
+  },
+
+   pageWrapper: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    height: "15vh",
+    width: "15vw",
+  },
+  container: {
+    maxWidth: 600,
+    minHeight: 400,
+    margin: "10px auto",
+    padding: 70,
+    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    backgroundColor: "rgba(114, 175, 190, 0.9)", // white translucent background
+    borderRadius: 30,
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+    position: "relative",
+    zIndex: 1,
+  },
+  title: {
+    color: "#007acc",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  input: {
+    width: "100%",
+    padding: "12px 15px",
+    fontSize: 16,
+    marginBottom: 36,
+    borderRadius: 6,
+    border: "1px solid #007acc",
+    outline: "none",
+  },
+  label: {
+    fontWeight: "bold",
+    color: "#007acc",
+    marginBottom: 6,
+    display: "block",
+    textAlign: "left",
+  },
+  select: {
+    width: "100%",
+    padding: "12px 15px",
+    fontSize: 16,
+    marginBottom: 16,
+    borderRadius: 6,
+    border: "1px solid #007acc",
+    outline: "none",
+    backgroundColor: "white",
+  },
+  button: {
+    padding: 14,
+    fontSize: 18,
+    color: "white",
+    border: "none",
+    borderRadius: 10,
+    fontWeight: "bold",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+    backgroundColor: "#28a745", // default green for start button
+    marginTop: 10,
+    marginRight: 10,
+    boxShadow: "none",
+  },
+  stopButton: {
+    backgroundColor: "#dc3545", // red for stop button
+    marginTop: 10,
+    boxShadow: "none",
+  },
+  buttonHover: {
+    boxShadow: "0 0 15px 3px rgba(40, 167, 69, 0.8)", // green glow
+  },
+  stopButtonHover: {
+    boxShadow: "0 0 15px 3px rgba(220, 53, 69, 0.8)", // red glow
+  },
+};
+
+export default ProcessingPage;
+__ last version of front end ----------------
