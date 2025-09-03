@@ -871,10 +871,6 @@ from collections import deque
 
 
 
-from fastapi.staticfiles import StaticFiles
-
-
-
 
 
 
@@ -888,7 +884,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 # 👇 Add this line to serve your uploaded_videos folder
-app.mount("/videos", StaticFiles(directory="uploaded_videos"), name="videos")
+#app.mount("/videos", StaticFiles(directory="uploaded_videos"), name="videos")
 
 origins = [
     "http://localhost:3000",

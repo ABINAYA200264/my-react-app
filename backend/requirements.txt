@@ -2,6 +2,8 @@
 # --- Web Framework ---
 fastapi
 uvicorn
+python-multipart  # if you handle file uploads
+
 
 # --- Core ML / DS Stack ---
 tensorflow
