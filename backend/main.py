@@ -981,6 +981,7 @@ def send_count_email(count: int, to_email: str, start_time: datetime.datetime, e
     except Exception as e:
         logger.error(f"Error sending email: {e}")
         
+        
 @app.get("/video/{filename}")
 def get_video(filename: str):
     video_path = f"{filename}"
