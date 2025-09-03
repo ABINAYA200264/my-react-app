@@ -847,7 +847,8 @@
 
 
 import pathlib
-pathlib.PosixPath = pathlib.WindowsPath
+pathlib.WindowsPath = pathlib.PosixPath
+
 
 import os
 import smtplib
