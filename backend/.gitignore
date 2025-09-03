@@ -21,3 +21,6 @@ Thumbs.db
 # IDE/editor files
 .vscode/
 .idea/
+
+backend/uploaded_videos/
+*.mp4

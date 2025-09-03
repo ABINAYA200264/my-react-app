@@ -897,19 +897,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-YOLOV5_FULLPATH = "D:/Vchanel/Box_detection_web/yolov5"
+YOLOV5_FULLPATH = os.path.abspath("yolov5")
 
 MODEL_PATHS = {
     "Single Box": {
-        "weights": "D:/Vchanel/Box_detection_web/backend/best5.pt",
+        "weights":  os.path.abspath("backend/best5.pt"),
         "classes": ["box"]
     },
     "Multiple Box": {
-        "weights": "D:/Vchanel/Box_detection_web/backend/best_demo2.pt",
+        "weights": os.path.abspath("backend/best_demo2.pt"),
         "classes": ["box"]
     },
     "4_5_6 Box": {
-        "weights": "D:/Vchanel/Box_detection_web/backend/best_demo_allbox.pt",
+        "weights": os.path.abspath("backend/best_demo_allbox.pt"),
         "classes": ["4box", "5box", "6box"]
     }
 }
