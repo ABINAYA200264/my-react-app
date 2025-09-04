@@ -42,7 +42,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-YOLOV5_FULLPATH = os.path.abspath("yolov5")
+YOLOV5_PATH = os.path.abspath("yolov5")
 
 MODEL_PATHS = {
     "Single Box": {
