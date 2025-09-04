@@ -216,11 +216,10 @@ def run_video_processing(video_path, supervisor_name, vehicle_no, selected_model
             cv2.putText(frame, text, (x, y), font, font_scale, (0, 0, 255), thickness)
             details_text = ", ".join(f"{v} {k}" for k, v in class_counts.items())
             cv2.putText(frame, details_text, (x, y + 40), font, 1.0, (0, 255, 0), 2)
-            cv2.imshow("Live Detection with Counting", frame)
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord('q') or not processing_flag:
-                logger.info(f"Video processing stopped by 'q' or stop flag, count={count}")
-                break
+           
+           
+            logger.info(f"Video processing stopped by 'q' or stop flag, count={count}")
+            
         cap.release()
         cv2.destroyAllWindows()
         end_time = datetime.datetime.now()
