@@ -42,13 +42,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-YOLOV5_PATH = "D:/Vchanel/Box_detection_web/yolov5"
+YOLOV5_FULLPATH = os.path.abspath("yolov5")
 
 MODEL_PATHS = {
-    "Single Box": {"weights": "backend/best5.pt", "classes": ["box"]},
-    "Multiple Box": {"weights": "backend/best_demo2.pt", "classes": ["box"]},
-    "4_5_6 Box": {"weights": "backend/best_demo_allbox.pt", "classes": ["4box", "5box", "6box"]}
+    "Single Box": {
+        "weights": os.path.abspath("backend/best5.pt"),
+        "classes": ["box"]
+    },
+    "Multiple Box": {
+        "weights": os.path.abspath("backend/best_demo2.pt"),
+        "classes": ["box"]
+    },
+    "4_5_6 Box": {
+        "weights": os.path.abspath("backend/best_demo_allbox.pt"),
+        "classes": ["4box", "5box", "6box"]
+    }
 }
+
 
 CONF_THRESHOLD = 0.5
 MODEL_CACHE = {}
