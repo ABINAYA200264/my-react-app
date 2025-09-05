@@ -29,6 +29,9 @@ logger = logging.getLogger(__name__)
 processing_flag = False
 processing_result = {}
 
+YOLOV5_FULLPATH = os.path.abspath("yolov5")
+
+
 # Model paths
 MODEL_PATHS = {
     "Single Box": {
