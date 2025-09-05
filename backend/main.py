@@ -1,13 +1,19 @@
 import os
+import sys
 import cv2
 import torch
 import datetime
 import logging
-import pandas as pd
-from fastapi import FastAPI, UploadFile, Form, BackgroundTasks
+from fastapi import FastAPI, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
+
+# Add YOLOv5 path
+sys.path.append("yolov5")
+
+from models.common import DetectMultiBackend
+from utils.torch_utils import select_device
+from utils.general import non_max_suppression
 
 # FastAPI app
 app = FastAPI(title="Box Detection Backend")
@@ -29,9 +35,6 @@ logger = logging.getLogger(__name__)
 processing_flag = False
 processing_result = {}
 
-YOLOV5_FULLPATH = os.path.abspath("yolov5")
-
-
 # Model paths
 MODEL_PATHS = {
     "Single Box": {
@@ -48,65 +51,71 @@ MODEL_PATHS = {
     }
 }
 
-# Helper: load YOLOv5
 def load_model(weights_path):
-    return torch.hub.load("ultralytics/yolov5", "custom", path=weights_path, source="github")
+    device = select_device("cpu")  # Render free tier has no GPU
+    model = DetectMultiBackend(weights_path, device=device)
+    return model
 
-# Video processing function
 def run_video_processing(video_url, supervisor_name, vehicle_no, selected_model):
     global processing_flag, processing_result
 
-    model_info = MODEL_PATHS[selected_model]
-    model = load_model(model_info["weights"])
-    model.conf = 0.25
-    model.iou = 0.45
+    try:
+        model_info = MODEL_PATHS[selected_model]
+        model = load_model(model_info["weights"])
+        model.conf = 0.25
+        model.iou = 0.45
 
-    cap = None
-    if video_url.startswith(("http://", "https://", "rtsp://", "rtmp://")):
+        # Open video
         cap = cv2.VideoCapture(video_url)
-    else:
-        cap = cv2.VideoCapture(video_url)
+        if not cap.isOpened():
+            logger.error("Cannot open video: %s", video_url)
+            processing_flag = False
+            return
 
-    if not cap.isOpened():
-        logger.error("Cannot open video")
-        processing_flag = False
-        return
+        start_time = datetime.datetime.now()
+        frame_count = 0
+        total_detections = 0
+        class_counts = {}
 
-    start_time = datetime.datetime.now()
-    frame_count = 0
-    total_detections = 0
-    class_counts = {}
+        while cap.isOpened() and processing_flag:
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-    while cap.isOpened() and processing_flag:
-        ret, frame = cap.read()
-        if not ret:
-            break
+            frame_count += 1
+            if frame_count % 3 != 0:  # Skip frames to save memory
+                continue
 
-        frame_count += 1
-        if frame_count % 3 != 0:  # Skip frames to save memory
-            continue
+            # Convert to RGB
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = model(frame_rgb)
+            # Run YOLOv5 inference
+            results = model(frame_rgb)
+            detections = non_max_suppression(results, conf_thres=0.25, iou_thres=0.45)[0]
 
-        for _, row in results.pandas().xyxy[0].iterrows():
-            cls_name = row["name"]
-            total_detections += 1
-            class_counts[cls_name] = class_counts.get(cls_name, 0) + 1
+            if detections is not None and len(detections):
+                for *xyxy, conf, cls in detections:
+                    cls_name = model.names[int(cls)]
+                    total_detections += 1
+                    class_counts[cls_name] = class_counts.get(cls_name, 0) + 1
 
-    cap.release()
-    end_time = datetime.datetime.now()
+        cap.release()
+        end_time = datetime.datetime.now()
 
-    processing_result = {
-        "supervisor_name": supervisor_name,
-        "vehicle_no": vehicle_no,
-        "model_used": selected_model,
-        "total_detections": total_detections,
-        "classes_detected": class_counts,
-        "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
-        "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
-        "processing_duration_sec": (end_time - start_time).total_seconds(),
-    }
+        processing_result = {
+            "supervisor_name": supervisor_name,
+            "vehicle_no": vehicle_no,
+            "model_used": selected_model,
+            "total_detections": total_detections,
+            "classes_detected": class_counts,
+            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "processing_duration_sec": (end_time - start_time).total_seconds(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error during video processing: {e}")
+        processing_result = {"error": str(e)}
 
     processing_flag = False
 
