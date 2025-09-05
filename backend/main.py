@@ -35,15 +35,15 @@ YOLOV5_FULLPATH = os.path.abspath("yolov5")
 # Model paths
 MODEL_PATHS = {
     "Single Box": {
-        "weights": os.path.abspath("backend/models/best5.pt"),
+        "weights": os.path.abspath("backend/best5.pt"),
         "classes": ["box"]
     },
     "Multiple Box": {
-        "weights": os.path.abspath("backend/models/best_demo2.pt"),
+        "weights": os.path.abspath("backend/best_demo2.pt"),
         "classes": ["box"]
     },
     "4_5_6 Box": {
-        "weights": os.path.abspath("backend/models/best_demo_allbox.pt"),
+        "weights": os.path.abspath("backend/best_demo_allbox.pt"),
         "classes": ["4box", "5box", "6box"]
     }
 }
