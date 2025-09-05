@@ -1,85 +1,70 @@
 import React, { useState } from "react";
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
-
 function App() {
-  const [videoPath, setVideoPath] = useState("");
-  const [supervisorName, setSupervisorName] = useState("");
-  const [vehicleNo, setVehicleNo] = useState("");
-  const [selectedModel, setSelectedModel] = useState("Single Box");
-  const [result, setResult] = useState(null);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [supervisor, setSupervisor] = useState("");
+  const [vehicle, setVehicle] = useState("");
+  const [status, setStatus] = useState("");
+  const [results, setResults] = useState(null);
 
   const startProcessing = async () => {
-    if (!videoPath || !supervisorName || !vehicleNo) {
-      alert("Fill all fields");
-      return;
-    }
-
+    setStatus("Starting...");
     const formData = new FormData();
-    formData.append("video_url", videoPath);
-    formData.append("supervisor_name", supervisorName);
-    formData.append("vehicle_no", vehicleNo);
-    formData.append("selected_model", selectedModel);
+    formData.append("video_url", videoUrl);
+    formData.append("supervisor_name", supervisor);
+    formData.append("vehicle_no", vehicle);
 
-    const res = await fetch(`${API_URL}/process-video`, {
+    const res = await fetch("http://127.0.0.1:8000/process-video", {
       method: "POST",
       body: formData,
     });
     const data = await res.json();
-    console.log(data);
+    setStatus(data.message);
+  };
 
-    // Poll for results
-    const interval = setInterval(async () => {
-      const res = await fetch(`${API_URL}/results`);
-      const json = await res.json();
-      if (json.status === "done") {
-        setResult(json.result);
-        clearInterval(interval);
-      }
-    }, 5000);
+  const checkResults = async () => {
+    const res = await fetch("http://127.0.0.1:8000/results");
+    const data = await res.json();
+    if (data.status === "done") {
+      setResults(data.result);
+    } else {
+      setStatus("No results yet...");
+    }
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h2>📦 Box Detection App</h2>
-      <div>
-        <input
-          type="text"
-          placeholder="Video URL or Path"
-          value={videoPath}
-          onChange={(e) => setVideoPath(e.target.value)}
-        />
-      </div>
-      <div>
-        <input
-          type="text"
-          placeholder="Supervisor Name"
-          value={supervisorName}
-          onChange={(e) => setSupervisorName(e.target.value)}
-        />
-      </div>
-      <div>
-        <input
-          type="text"
-          placeholder="Vehicle No"
-          value={vehicleNo}
-          onChange={(e) => setVehicleNo(e.target.value)}
-        />
-      </div>
-      <div>
-        <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
-          <option>Single Box</option>
-          <option>Multiple Box</option>
-          <option>4_5_6 Box</option>
-        </select>
-      </div>
-      <button onClick={startProcessing}>🚀 Start Processing</button>
-
-      {result && (
-        <div style={{ marginTop: "20px" }}>
-          <h3>✅ Results</h3>
-          <pre>{JSON.stringify(result, null, 2)}</pre>
-        </div>
+    <div style={{ padding: "20px" }}>
+      <h2>4_5_6 Box Detection</h2>
+      <input
+        type="text"
+        placeholder="Video URL (file path or stream)"
+        value={videoUrl}
+        onChange={(e) => setVideoUrl(e.target.value)}
+        style={{ width: "100%", marginBottom: "10px" }}
+      />
+      <input
+        type="text"
+        placeholder="Supervisor Name"
+        value={supervisor}
+        onChange={(e) => setSupervisor(e.target.value)}
+        style={{ width: "100%", marginBottom: "10px" }}
+      />
+      <input
+        type="text"
+        placeholder="Vehicle No"
+        value={vehicle}
+        onChange={(e) => setVehicle(e.target.value)}
+        style={{ width: "100%", marginBottom: "10px" }}
+      />
+      <button onClick={startProcessing} style={{ marginRight: "10px" }}>
+        Start Processing
+      </button>
+      <button onClick={checkResults}>Check Results</button>
+      <p>Status: {status}</p>
+      {results && (
+        <pre style={{ background: "#eee", padding: "10px" }}>
+          {JSON.stringify(results, null, 2)}
+        </pre>
       )}
     </div>
   );
